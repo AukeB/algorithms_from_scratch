@@ -1,0 +1,3 @@
+"""This config is not use yet"""
+MODE_MODEL: OVERLAPPING # Options: ['OVERLAPPING', 'SIMPLE-TILED', 'EVEN-SIMPLER-TILED']
+MODE_BOUNDARY_CONDITIONS: WRAP-AROUND # Options (based on chatgpt prompt): ['WRAP-AROUND', 'CLAMPING', 'MIRRORING', 'NOISE']

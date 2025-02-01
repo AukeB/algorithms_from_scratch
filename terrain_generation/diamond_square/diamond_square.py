@@ -1,4 +1,5 @@
 """ """
+
 import random as rd
 import math
 from constants import Size
@@ -43,7 +44,7 @@ class DiamondSquare:
         self.grid[0][-1] = self.corner_values[self.corner_names[1]]
         self.grid[-1][0] = self.corner_values[self.corner_names[2]]
         self.grid[-1][-1] = self.corner_values[self.corner_names[3]]
-    
+
     def exists_grid_element(
         self,
         x: int,
@@ -52,27 +53,19 @@ class DiamondSquare:
         """ """
         exists = 0 <= y < self.grid_dimensions.height and 0 <= x < self.grid_dimensions.width
         return exists
-    
-    def are_grid_elements_not_none(
-        self,
-        list_of_tuples
-    ):
+
+    def are_grid_elements_not_none(self, list_of_tuples):
         """ """
         return all(self.grid[y][x] is not None for x, y in list_of_tuples)
 
-    def find_valid_directions(
-        self,
-        x: int,
-        y: int,
-        directions: list[tuple[int, int]]
-    ) -> bool:
+    def find_valid_directions(self, x: int, y: int, directions: list[tuple[int, int]]) -> bool:
         """ """
         valid_directions = []
 
         for dx, dy in self.diamond_directions:
-            if self.exists_grid_element(x=x+dx, y=y+dy):
+            if self.exists_grid_element(x=x + dx, y=y + dy):
                 valid_directions.append((dx, dy))
-        
+
         return valid_directions
 
     def determine_if_midpoint(
@@ -83,39 +76,28 @@ class DiamondSquare:
     ) -> bool:
         """ """
         valid_directions = self.find_valid_directions(x, y, directions)
-        
-        neighbor_coordinates = [(
-                x + x_direction,
-                y + y_direction
-            ) for (x_direction, y_direction) in valid_directions
+
+        neighbor_coordinates = [
+            (x + x_direction, y + y_direction) for (x_direction, y_direction) in valid_directions
         ]
 
         if self.are_grid_elements_not_none(neighbor_coordinates):
             return neighbor_coordinates
-        
+
         while not self.are_grid_elements_not_none(neighbor_coordinates):
-            neighbor_coordinates = [(
-                neighbor_coordinates[index][0] + x_direction,
-                neighbor_coordinates[index][1] + y_direction
-            ) for index, (x_direction, y_direction) in enumerate(valid_directions)
-        ]
-            for (y, x) in neighbor_coordinates:
+            neighbor_coordinates = [
+                (
+                    neighbor_coordinates[index][0] + x_direction,
+                    neighbor_coordinates[index][1] + y_direction,
+                )
+                for index, (x_direction, y_direction) in enumerate(valid_directions)
+            ]
+            for y, x in neighbor_coordinates:
                 if self.exists_grid_element(x, y):
                     return False
 
             if self.are_grid_elements_not_none(neighbor_coordinates):
                 return neighbor_coordinates
-        
-
-
-        
-
-
-
-
-
-
-
 
         # neighbor_found = False
 
@@ -123,17 +105,17 @@ class DiamondSquare:
         #     x_new, y_new = x + x_direction, y + y_direction
         #     if not self.exists_grid_element(x_new, y_new):
         #         continue
-            
+
         #     neighbor_found = False
         #     while self.exists_grid_element(x_new, y_new):
         #         if self.grid[y_new][x_new]:
         #             neighbor_found = True
-                
+
         #         x_new, y_new = x_new + x_direction, y_new + y_direction
 
         #     if not neighbor_found:
         #         break
-        
+
         # return neighbor_found
         return False
 
@@ -142,14 +124,12 @@ class DiamondSquare:
         step_name: str,
     ) -> set[tuple[int, int]]:
         """ """
-        if step_name not in ['diamond', 'square']:
-            raise ValueError(
-                f"Invalid step_name '{step_name}'. Expected 'diamond' or 'square'."
-            )
+        if step_name not in ["diamond", "square"]:
+            raise ValueError(f"Invalid step_name '{step_name}'. Expected 'diamond' or 'square'.")
 
         coordinates = set()
-        directions = self.diamond_directions if step_name == 'diamond' else self.square_directions
-        
+        directions = self.diamond_directions if step_name == "diamond" else self.square_directions
+
         for y in range(self.grid_dimensions.height):
             for x in range(self.grid_dimensions.width):
                 if self.grid[y][x] is not None:
@@ -159,34 +139,22 @@ class DiamondSquare:
                     coordinates.add((x, y))
 
         return coordinates
-    
-
-
-
-
-
-
-
-
-
-
-
 
     def set_values(self, midpoint_coordinates_and_values: dict[tuple, float]) -> None:
         for midpoint_coordinates, midpoint_value in midpoint_coordinates_and_values.items():
             x, y = midpoint_coordinates[0], midpoint_coordinates[1]
             self.grid[x][y] = midpoint_value + self.obtain_random_value()
-        
+
     def obtain_random_value(
         self,
-        iteration: int=1,
+        iteration: int = 1,
     ) -> float:
         """
         Generate a random value adjusted by a scale constant that decreases with each iteration.
-        
+
         Args:
             iteration (int): The current iteration number.
-        
+
         Returns:
             float: A random value scaled by the factor 2^(-iteration * h).
         """
@@ -201,7 +169,7 @@ class DiamondSquare:
         self,
     ) -> None:
         """ """
-        self.obtain_coordinate_pairs(step_name='diamond')
+        self.obtain_coordinate_pairs(step_name="diamond")
 
     def execute(
         self,
@@ -217,5 +185,5 @@ class DiamondSquare:
 
         # for row in self.grid:
         #     print(row)
-        
+
         # self.perform_square_step()

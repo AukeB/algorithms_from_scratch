@@ -11,28 +11,28 @@ class BitmapUtils:
     """ """
 
     def _obtain_bitmap_size(
-            self,
-            sheet,
-            default_background_color: str='00000000' # Not sure if LibreOffice specific.
+        self,
+        sheet,
+        default_background_color: str = "00000000",  # Not sure if LibreOffice specific.
     ) -> tuple[int, int]:
         """Find the first column and row with None values in the given sheet."""
         first_column_with_none = None
         first_row_with_none = None
 
         # Access the first row
-        for col_idx, cell in enumerate(sheet[1], start=1):  
+        for col_idx, cell in enumerate(sheet[1], start=1):
             backgrund_color = cell.fill.start_color.index
             if backgrund_color == default_background_color:
                 first_column_with_none = col_idx - 1
                 break
 
         # Access the first column
-        for row_idx, cell in enumerate(sheet["A"], start=1):  
+        for row_idx, cell in enumerate(sheet["A"], start=1):
             backgrund_color = cell.fill.start_color.index
             if backgrund_color == default_background_color:
                 first_row_with_none = row_idx - 1
                 break
-        
+
         return first_column_with_none, first_row_with_none
 
     def _hex_to_rgb(self, color_hex):
@@ -42,12 +42,12 @@ class BitmapUtils:
         b = int(color_hex[4:6], 16)
 
         return (r, g, b)
-    
+
     def _export_bitmap_as_png(
         self,
         bitmap: list[list[tuple[int, int, int]]],
         file_name: str,
-        cell_size: int=30,
+        cell_size: int = 30,
     ) -> None:
         """ """
         bitmap_dimensions = Size(len(bitmap), len(bitmap[0]))
@@ -63,7 +63,9 @@ class BitmapUtils:
                     for dy in range(cell_size):
                         img.putpixel((x * cell_size + dx, y * cell_size + dy), color)
 
-        image_filename = 'terrain_generation/wave_function_collapse/bitmaps/' + file_name.split('.')[0] + '.png'
+        image_filename = (
+            "terrain_generation/wave_function_collapse/bitmaps/" + file_name.split(".")[0] + ".png"
+        )
         img.save(image_filename, "PNG")
 
         logging.info(f"Bitmap exported as {image_filename}")
@@ -71,14 +73,14 @@ class BitmapUtils:
     def read_bitmap_from_excel(
         self,
         file_name: str,
-        relative_dir_path: str="bitmaps",
-        export_as_png: bool=True,
+        relative_dir_path: str = "bitmaps",
+        export_as_png: bool = True,
     ) -> tuple[list[list[str]], list[list[str]]]:
         """ """
         relative_file_path = os.path.join(relative_dir_path, file_name)
-        
+
         # This assumes the bitmap is always on the first tab of the excel file.
-        sheet = load_workbook(relative_file_path).worksheets[0] 
+        sheet = load_workbook(relative_file_path).worksheets[0]
         size_width, size_height = self._obtain_bitmap_size(sheet=sheet)
 
         bitmap = []
@@ -95,16 +97,13 @@ class BitmapUtils:
                 color_hex = cell.fill.start_color.index
                 color_rgb = self._hex_to_rgb(
                     color_hex=color_hex[2:]
-                ) # First two elements contain transparency/alpha/opacity.
+                )  # First two elements contain transparency/alpha/opacity.
                 bitmap_row.append(color_rgb)
 
             bitmap.append(bitmap_row)
-        
+
         if export_as_png:
-            self._export_bitmap_as_png(
-                bitmap=bitmap,
-                file_name=file_name
-            )
+            self._export_bitmap_as_png(bitmap=bitmap, file_name=file_name)
 
         return bitmap
 

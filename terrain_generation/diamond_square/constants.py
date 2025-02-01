@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-# Used for specifying width and height in number of pixels 
+# Used for specifying width and height in number of pixels
 # or number of cells within a grid.
 Size = namedtuple("Size", ["width", "height"])
 

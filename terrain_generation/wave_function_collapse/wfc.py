@@ -62,7 +62,12 @@ class WaveFunctionCollapse:
     def _extract_tile(self, x, y):
         """ """
         tile = tuple(
-            tuple(self.bitmap[y + i][x + j] for j in range(self.tile_dimensions.width))
+            tuple(
+                self.bitmap[(y + i) % self.bitmap_dimensions.height][
+                    (x + j) % self.bitmap_dimensions.width
+                ]
+                for j in range(self.tile_dimensions.width)
+            )
             for i in range(self.tile_dimensions.height)
         )
 
@@ -73,12 +78,10 @@ class WaveFunctionCollapse:
     ) -> None:
         """ """
         tile_count = Counter()
-        final_row = self.bitmap_dimensions.height - self.tile_dimensions.height + 1
-        final_column = self.bitmap_dimensions.width - self.tile_dimensions.width + 1
-        total_occurrences = final_row * final_column
+        total_occurrences = self.bitmap_dimensions.height * self.bitmap_dimensions.width
 
-        for y in range(final_row):
-            for x in range(final_column):
+        for y in range(self.bitmap_dimensions.height):
+            for x in range(self.bitmap_dimensions.width):
                 tile: Tile = self._extract_tile(x, y)
                 tile_count[tile] += 1
 
