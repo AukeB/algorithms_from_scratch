@@ -10,10 +10,10 @@ class Tile:
     ) -> None:
         """ """
         self.value = tile
-        self.up = tile[0]
-        self.down = tile[-1]
-        self.right = tuple(row[-1] for row in tile)
-        self.left = tuple(row[0] for row in tile)
+        self.up = tile[:-1]
+        self.down = tile[1:]
+        self.right = tuple(row[1:] for row in tile)
+        self.left = tuple(row[:-1] for row in tile)
 
     def __repr__(self):
         return f"{self.value}"

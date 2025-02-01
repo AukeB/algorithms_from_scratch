@@ -93,9 +93,11 @@ class WFCVisualizer:
 
         pg.display.flip()
 
-    def show_unique_tiles(self, tile_weights):
+    def show_tiles(self, tiles):
         # todo: show tile weight next to or in the tile.
-        tiles = list(tile_weights.keys())
+        if isinstance(tiles, dict):
+            tiles = list(tiles.keys())
+
         next_square_number = math.ceil(math.sqrt(len(tiles)))
         self.grid_dimensions = Size(next_square_number, next_square_number)
         self.tile_size, self.cell_size = self._compute_tile_and_cell_size(inner_margin=3)
@@ -114,7 +116,7 @@ class WFCVisualizer:
                 if event.type == pg.QUIT:
                     break
 
-    def show_adjacency(
+    def show_neighbors(
         self,
         adjacency: dict,
     ) -> None:
@@ -123,8 +125,10 @@ class WFCVisualizer:
         font = pg.font.SysFont("Arial", 36)
         grid_height = 7
 
+        self.screen.fill((255, 255, 255))
+
         key_to_check = rd.choice(list(adjacency.keys()))
-        key_to_check = Tile((("A", "A", "A"), ("B", "B", "A"), ("B", "B", "A")))
+        key_to_check = Tile((('B', 'B', 'B'), ('B', 'C', 'C'), ('B', 'C', 'C')))
 
         grid_height = max(
             (len(value) for value in adjacency[key_to_check].values() if len(value) > grid_height),
@@ -143,7 +147,7 @@ class WFCVisualizer:
         # Draw directions.
         for i, direction in enumerate(adjacency[key_to_check].keys()):
             x, y = self._compute_tile_position(i * 2 + (1 / 3), 2)
-            text = font.render(direction.capitalize(), True, (255, 255, 255))
+            text = font.render(direction.capitalize(), True, (0, 0, 0))
             self.screen.blit(text, (x, y))
 
             for j, neighbor_tile in enumerate(adjacency[key_to_check][direction]):

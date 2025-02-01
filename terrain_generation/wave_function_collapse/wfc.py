@@ -26,9 +26,13 @@ class WaveFunctionCollapse:
             [None for _ in range(grid_dimensions.width)] for _ in range(grid_dimensions.height)
         ]
         self._check_tile_and_bitmap_dimensions()
-        self.tile_weights = self.compute_tile_weights()
+        self.tile_weights, self.all_tiles = self.compute_tiles_and_weights()
         self.tile_set = set(self.tile_weights.keys())
-        self.adjacency = self.compute_neighbors()
+        self.neighbors = self.compute_neighbors()
+        for key, value in self.neighbors.items():
+            print(key)
+            for key2, value2 in value.items():
+                print(key2, value2)
         self.entropy_grid = self.initialize_entropy()
 
         self.directions = {
@@ -44,8 +48,9 @@ class WaveFunctionCollapse:
             color_mapping=color_mapping,
         )
 
-        # self.wfc_visualizer.show_unique_tiles(self.tile_weights)
-        # self.wfc_visualizer.show_adjacency(self.adjacency)
+        #self.wfc_visualizer.show_tiles(self.all_tiles)
+        #self.wfc_visualizer.show_tiles(self.tile_weights)
+        self.wfc_visualizer.show_neighbors(self.neighbors)
 
     def _check_tile_and_bitmap_dimensions(self):
         min_bitmap_dim = min(self.bitmap_dimensions.width, self.bitmap_dimensions.height)
@@ -73,20 +78,20 @@ class WaveFunctionCollapse:
 
         return Tile(tile)
 
-    def compute_tile_weights(
-        self,
-    ) -> None:
-        """ """
+    def compute_tiles_and_weights(self) -> tuple[dict, list[list]]:
+        """Computes the weights of unique tiles and stores all tiles in a 2D list."""
         tile_count = Counter()
         total_occurrences = self.bitmap_dimensions.height * self.bitmap_dimensions.width
+        all_tiles = []
 
         for y in range(self.bitmap_dimensions.height):
             for x in range(self.bitmap_dimensions.width):
                 tile: Tile = self._extract_tile(x, y)
                 tile_count[tile] += 1
-
+                all_tiles.append(tile)
+        
         tile_weights = {tile: count / total_occurrences for tile, count in tile_count.items()}
-        return tile_weights
+        return tile_weights, all_tiles
 
     def compute_neighbors(
         self,
@@ -96,6 +101,7 @@ class WaveFunctionCollapse:
 
         for tile in self.tile_set:
             for other_tile in self.tile_set:
+                #if tile != other_tile:
                 if tile.up == other_tile.down:
                     adjacency[tile]["up"].add(other_tile)
                 if tile.down == other_tile.up:
@@ -132,7 +138,7 @@ class WaveFunctionCollapse:
                 and 0 <= ny < self.grid_dimensions.height
                 and self.grid[ny][nx] is None
             ):
-                valid_tiles = self.adjacency.get(tile, {}).get(direction, set())
+                valid_tiles = self.neighbors.get(tile, {}).get(direction, set())
                 self.entropy_grid[ny][nx] &= valid_tiles
                 if len(self.entropy_grid[ny][nx]) == 0:
                     self.wfc_visualizer.visualize(self.grid, self.entropy_grid)
