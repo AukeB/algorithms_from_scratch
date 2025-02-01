@@ -5,6 +5,7 @@ __pycache__/
 
 # Ignore temporary lock files starting with .~lock in the 'bitmaps' folder
 bitmaps/.~lock*
+bitmaps/.~lock.*#
 
 # Virtual environment folders
 venv/
