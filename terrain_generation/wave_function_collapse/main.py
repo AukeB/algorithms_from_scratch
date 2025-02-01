@@ -8,28 +8,33 @@ bitmap_utils = BitmapUtils()
 
 
 def main():
-    bitmap = bitmap_utils.read_bitmap_from_excel(
-        relative_dir_path="wave_function_collapse/bitmaps",
-        file_name="flowers.xlsx",
-    )
+    bitmaps = ['flowers', 'city', 'symmetric_pattern', 'network', 'loop']
+    bitmaps = [f"{bitmap}.xlsx" for bitmap in bitmaps]
 
-    color_mapping = bitmap_utils.create_color_mapping(rgb_size=bitmap)
-    bitmap = bitmap_utils.apply_color_mapping(rgb_size=bitmap, color_mapping=color_mapping)
+    for file_name_bitmap in bitmaps:
+        bitmap = bitmap_utils.read_bitmap_from_excel(
+            relative_dir_path="terrain_generation/wave_function_collapse/bitmaps",
+            file_name=file_name_bitmap,
+            export_as_png=True,
+        )
 
-    grid_dim = 30
-    tile_dim = 3
+    # color_mapping = bitmap_utils.create_color_mapping(rgb_size=bitmap)
+    # bitmap = bitmap_utils.apply_color_mapping(rgb_size=bitmap, color_mapping=color_mapping)
 
-    grid_dimensions = Size(grid_dim, grid_dim)
-    tile_dimensions = Size(tile_dim, tile_dim)
+    # grid_dim = 30
+    # tile_dim = 3
 
-    wfc = WaveFunctionCollapse(
-        bitmap=bitmap,
-        grid_dimensions=grid_dimensions,
-        tile_dimensions=tile_dimensions,
-        color_mapping=color_mapping,
-    )
+    # grid_dimensions = Size(grid_dim, grid_dim)
+    # tile_dimensions = Size(tile_dim, tile_dim)
 
-    wfc.collapse()
+    # wfc = WaveFunctionCollapse(
+    #     bitmap=bitmap,
+    #     grid_dimensions=grid_dimensions,
+    #     tile_dimensions=tile_dimensions,
+    #     color_mapping=color_mapping,
+    # )
+
+    # wfc.collapse()
 
 
 if __name__ == "__main__":

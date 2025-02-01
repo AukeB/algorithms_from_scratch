@@ -17,10 +17,11 @@
 - The '**Even simpler tiled model**':
 - The '**Simple tiled model**':
     - Predefined set of $NxN$ paterns/tiles.
-    - Predefined adjacency rules.
+    - Predefined adjacency rules for these patterns.
 - The '**Overlapping model**:
     - No predefined patterns/tiles and no predefined adjacency rules.
     - Instead, these are extracted directly from the source input bitmap.
+    - To make this version of the algorithm even more advanced, you can think about mirroring and rotating your patterns to expand your tileset. You can also determine the symmetry properties of your tileset to make this code more efficient if you want to implement that. If I at some point will code that, I will probably treat it as an additional feature once I've completed programming the algorithm without it.
 
 ## Resources
 
