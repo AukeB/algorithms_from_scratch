@@ -11,3 +11,5 @@
 ## Model versions
 
 ## Resources
+
+- The [original repository](https://github.com/mxgmn/WaveFunctionCollapse/tree/master) by mxgmn
