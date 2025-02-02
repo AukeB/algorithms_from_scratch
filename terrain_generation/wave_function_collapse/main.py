@@ -28,7 +28,7 @@ def main():
         color_mapping=color_mapping,
     )
 
-    #wfc.collapse()
+    wfc.collapse()
 
 if __name__ == "__main__":
     main()

@@ -105,34 +105,36 @@ class WaveFunctionCollapse:
         ]
         return grid
 
-    def place_tile(self, y: int, x: int, tile: tuple) -> None:
-        """Places a 3x3 tile in the grid, ensuring boundary checks."""
-        for dy in range(3):
-            for dx in range(3):
-                ny, nx = y + dy, x + dx
-                if 0 <= ny < self.grid_dimensions.height - self.tile_dimensions.height + 1 and 0 <= nx < self.grid_dimensions.width - self.tile_dimensions.width + 1:
-                    if self.grid[ny][nx] == None:
-                        self.grid[ny][nx] = tile.value[dy][dx]
-
     def propagate(
         self,
         y: int,
         x: int,
-        tile: str,
     ) -> None:
         """ """
-        for direction, (dy, dx) in self.directions.items():
+        for direction, (dy, dx) in directions.items():
             ny, nx = y + dy, x + dx
             if (
                 0 <= nx < self.grid_dimensions.width
                 and 0 <= ny < self.grid_dimensions.height
-                and self.grid[ny][nx] is None
+                and self.grid[ny][nx].collapsed == False
             ):
-                valid_tiles = self.neighbors.get(tile, {}).get(direction, set())
-                self.entropy_grid[ny][nx] &= valid_tiles
-                if len(self.entropy_grid[ny][nx]) == 0:
-                    #self.wfc_visualizer.visualize(self.grid, self.entropy_grid)
-                    time.sleep(50)
+                valid_tiles = self.neighbors.get(self.grid[y][x].tile, {}).get(direction, set())
+                self.grid[ny][nx].options &= valid_tiles
+                
+                # if len(self.entropy_grid[ny][nx]) == 0:
+                #     self.wfc_visualizer.visualize(self.grid, self.entropy_grid)
+                #     time.sleep(50)
+    
+    def collapse_cell(
+        self,
+        y: int,
+        x: int,
+        tile: tuple
+    ) -> None:
+        """ """
+        self.grid[y][x].options = []
+        self.grid[y][x].collapsed = True
+        self.grid[y][x].tile = tile
 
     def collapse(
         self,
@@ -142,27 +144,24 @@ class WaveFunctionCollapse:
             min_entropy = float("inf")
             min_cell = None
 
-            for y in range(self.grid_dimensions.width):
-                for x in range(self.grid_dimensions.height):
-                    if self.grid[y][x] is None:
-                        options = self.entropy_grid[y][x]
-
+            for cell_y in range(self.grid_dimensions.width):
+                for cell_x in range(self.grid_dimensions.height):
+                    if not self.grid[cell_y][cell_x].collapsed:
+                        options = self.grid[cell_y][cell_x].options
                         if len(options) < min_entropy:
                             min_entropy = len(options)
-                            min_cell = (y, x)
+                            min_cell = (cell_y, cell_x)
 
-            if min_cell is None:  # Necessary?
+            if min_cell is None:
                 break
 
             # Collapse the wave function
             y, x = min_cell
-            choices = list(self.entropy_grid[y][x])
+            choices = list(self.grid[y][x].options)
             weights = [self.tile_weights[tile] for tile in choices]
             chosen_tile = rd.choices(choices, weights)[0]
-            self.place_tile(y, x, chosen_tile)
-            self.propagate(y, x, chosen_tile)
+            self.collapse_cell(y, x, chosen_tile)
+            self.propagate(y, x)
 
-            #self.wfc_visualizer.visualize(self.grid, self.entropy_grid)
-            self.wfc_visualizer.test_visualize(self.grid)
+            self.wfc_visualizer.visualize(self.grid)
             time.sleep(1)
-            # time.sleep(0.2)
