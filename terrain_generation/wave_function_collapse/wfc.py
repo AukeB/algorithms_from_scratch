@@ -144,7 +144,7 @@ class WaveFunctionCollapse:
         self.grid[y][x].tile = tile
         self.grid[y][x].superposition_tile = None
 
-    def collapse(
+    def collapse_grid(
         self,
     ) -> None:
         """ """
@@ -167,7 +167,6 @@ class WaveFunctionCollapse:
                 break
 
             min_cell = rd.choice(min_cells)
-
 
             # Collapse the wave function
             y, x = min_cell

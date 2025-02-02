@@ -26,15 +26,15 @@ class BitmapUtils:
 
         # Access the first row
         for col_idx, cell in enumerate(sheet[1], start=1):
-            backgrund_color = cell.fill.start_color.index
-            if backgrund_color == default_background_color:
+            background_color = cell.fill.start_color.index
+            if background_color == default_background_color:
                 first_column_with_none = col_idx - 1
                 break
 
         # Access the first column
         for row_idx, cell in enumerate(sheet["A"], start=1):
-            backgrund_color = cell.fill.start_color.index
-            if backgrund_color == default_background_color:
+            background_color = cell.fill.start_color.index
+            if background_color == default_background_color:
                 first_row_with_none = row_idx - 1
                 break
 

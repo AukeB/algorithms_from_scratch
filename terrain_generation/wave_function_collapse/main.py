@@ -8,7 +8,7 @@ bitmap_utils = BitmapUtils()
 def main():
     bitmap = bitmap_utils.read_bitmap_from_excel(
         relative_dir_path="terrain_generation/wave_function_collapse/bitmaps",
-        file_name="network.xlsx",
+        file_name="city.xlsx",
         export_as_png=True,
     )
 
@@ -30,7 +30,7 @@ def main():
             color_mapping=color_mapping,
         )
 
-        wfc.collapse()
+        wfc.collapse_grid()
 
 if __name__ == "__main__":
     main()
