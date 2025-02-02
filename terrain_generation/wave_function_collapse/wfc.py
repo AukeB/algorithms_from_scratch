@@ -1,15 +1,13 @@
 import random as rd
-import copy
 import time
 from collections import Counter, defaultdict
 from tile import Tile
+from cell import Cell
 from visualize import WFCVisualizer
-from constants import Size
-
+from constants import Size, directions
 
 class WaveFunctionCollapse:
     """ """
-
     def __init__(
         self,
         bitmap: list[list[str]],
@@ -22,25 +20,11 @@ class WaveFunctionCollapse:
         self.bitmap_dimensions = Size(len(self.bitmap[0]), len(self.bitmap))
         self.grid_dimensions = grid_dimensions
         self.tile_dimensions = tile_dimensions
-        self.grid = [
-            [None for _ in range(grid_dimensions.width)] for _ in range(grid_dimensions.height)
-        ]
         self._check_tile_and_bitmap_dimensions()
         self.tile_weights, self.all_tiles = self.compute_tiles_and_weights()
         self.tile_set = set(self.tile_weights.keys())
         self.neighbors = self.compute_neighbors()
-        for key, value in self.neighbors.items():
-            print(key)
-            for key2, value2 in value.items():
-                print(key2, value2)
-        self.entropy_grid = self.initialize_entropy()
-
-        self.directions = {
-            "up": (-1, 0),
-            "down": (1, 0),
-            "left": (0, -1),
-            "right": (0, 1),
-        }
+        self.grid = self.initialize_grid()
 
         self.wfc_visualizer = WFCVisualizer(
             grid_dimensions=self.grid_dimensions,
@@ -48,9 +32,9 @@ class WaveFunctionCollapse:
             color_mapping=color_mapping,
         )
 
-        #self.wfc_visualizer.show_tiles(self.all_tiles)
-        #self.wfc_visualizer.show_tiles(self.tile_weights)
-        self.wfc_visualizer.show_neighbors(self.neighbors)
+        # #self.wfc_visualizer.show_tiles(self.all_tiles)
+        # #self.wfc_visualizer.show_tiles(self.tile_weights)
+        # #self.wfc_visualizer.show_neighbors(self.neighbors)
 
     def _check_tile_and_bitmap_dimensions(self):
         min_bitmap_dim = min(self.bitmap_dimensions.width, self.bitmap_dimensions.height)
@@ -97,32 +81,38 @@ class WaveFunctionCollapse:
         self,
     ) -> defaultdict:
         """ """
-        adjacency = defaultdict(lambda: defaultdict(set))
+        neighbors = defaultdict(lambda: defaultdict(set))
 
         for tile in self.tile_set:
             for other_tile in self.tile_set:
-                #if tile != other_tile:
                 if tile.up == other_tile.down:
-                    adjacency[tile]["up"].add(other_tile)
+                    neighbors[tile]["up"].add(other_tile)
                 if tile.down == other_tile.up:
-                    adjacency[tile]["down"].add(other_tile)
+                    neighbors[tile]["down"].add(other_tile)
                 if tile.left == other_tile.right:
-                    adjacency[tile]["left"].add(other_tile)
+                    neighbors[tile]["left"].add(other_tile)
                 if tile.right == other_tile.left:
-                    adjacency[tile]["right"].add(other_tile)
+                    neighbors[tile]["right"].add(other_tile)
 
-        return adjacency
-
-    def initialize_entropy(
+        return neighbors
+    
+    def initialize_grid(
         self,
     ) -> list[list[str]]:
         """ """
-        # Initially, every tile is in a superposition of all posssible tile values.
-        entropy = [
-            [copy.deepcopy(self.tile_set) for _ in range(self.grid_dimensions.width)]
-            for _ in range(self.grid_dimensions.height)
+        grid = [
+            [Cell(self.tile_set) for _ in range(self.grid_dimensions.width)] for _ in range(self.grid_dimensions.height)
         ]
-        return entropy
+        return grid
+
+    def place_tile(self, y: int, x: int, tile: tuple) -> None:
+        """Places a 3x3 tile in the grid, ensuring boundary checks."""
+        for dy in range(3):
+            for dx in range(3):
+                ny, nx = y + dy, x + dx
+                if 0 <= ny < self.grid_dimensions.height - self.tile_dimensions.height + 1 and 0 <= nx < self.grid_dimensions.width - self.tile_dimensions.width + 1:
+                    if self.grid[ny][nx] == None:
+                        self.grid[ny][nx] = tile.value[dy][dx]
 
     def propagate(
         self,
@@ -141,7 +131,7 @@ class WaveFunctionCollapse:
                 valid_tiles = self.neighbors.get(tile, {}).get(direction, set())
                 self.entropy_grid[ny][nx] &= valid_tiles
                 if len(self.entropy_grid[ny][nx]) == 0:
-                    self.wfc_visualizer.visualize(self.grid, self.entropy_grid)
+                    #self.wfc_visualizer.visualize(self.grid, self.entropy_grid)
                     time.sleep(50)
 
     def collapse(
@@ -169,8 +159,10 @@ class WaveFunctionCollapse:
             choices = list(self.entropy_grid[y][x])
             weights = [self.tile_weights[tile] for tile in choices]
             chosen_tile = rd.choices(choices, weights)[0]
-            self.grid[y][x] = chosen_tile
+            self.place_tile(y, x, chosen_tile)
             self.propagate(y, x, chosen_tile)
 
-            self.wfc_visualizer.visualize(self.grid, self.entropy_grid)
+            #self.wfc_visualizer.visualize(self.grid, self.entropy_grid)
+            self.wfc_visualizer.test_visualize(self.grid)
+            time.sleep(1)
             # time.sleep(0.2)

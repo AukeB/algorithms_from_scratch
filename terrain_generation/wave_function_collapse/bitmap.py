@@ -6,14 +6,19 @@ from collections import namedtuple
 
 Size = namedtuple("Size", ["width", "height"])
 
-
 class BitmapUtils:
     """ """
+    def __init__(
+        self,
+        output_file_path_bitmap_images="terrain_generation/wave_function_collapse/bitmaps/",
+    ) -> None:
+        """ """
+        self.output_file_path_bitmap_images = output_file_path_bitmap_images
 
     def _obtain_bitmap_size(
         self,
         sheet,
-        default_background_color: str = "00000000",  # Not sure if LibreOffice specific.
+        default_background_color: str = "00000000",
     ) -> tuple[int, int]:
         """Find the first column and row with None values in the given sheet."""
         first_column_with_none = None
@@ -54,7 +59,6 @@ class BitmapUtils:
         img_width = cell_size * bitmap_dimensions.width
         img_height = cell_size * bitmap_dimensions.height
 
-        # Create new image with a white background as default colour value.
         img = Image.new("RGB", (img_width, img_height), color=(255, 255, 255))
 
         for y, row in enumerate(bitmap):
@@ -64,7 +68,7 @@ class BitmapUtils:
                         img.putpixel((x * cell_size + dx, y * cell_size + dy), color)
 
         image_filename = (
-            "terrain_generation/wave_function_collapse/bitmaps/" + file_name.split(".")[0] + ".png"
+            self.output_file_path_bitmap_images + file_name.split(".")[0] + ".png"
         )
         img.save(image_filename, "PNG")
 
@@ -97,7 +101,7 @@ class BitmapUtils:
                 color_hex = cell.fill.start_color.index
                 color_rgb = self._hex_to_rgb(
                     color_hex=color_hex[2:]
-                )  # First two elements contain transparency/alpha/opacity.
+                ) # First two elements contain transparency/alpha/opacity.
                 bitmap_row.append(color_rgb)
 
             bitmap.append(bitmap_row)

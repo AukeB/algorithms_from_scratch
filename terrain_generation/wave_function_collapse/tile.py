@@ -1,9 +1,6 @@
 """ """
-
-
 class Tile:
     """ """
-
     def __init__(
         self,
         tile: tuple[tuple[str]],

@@ -92,6 +92,25 @@ class WFCVisualizer:
                 )  # Todo: clear screen when entropy_value has changed for (x, y)
 
         pg.display.flip()
+    
+    def test_visualize(self, grid, cell_size=30):
+        # Define the window size based on grid size and cell size
+        rows = len(grid)
+        cols = len(grid[0])
+        width = cols * cell_size
+        height = rows * cell_size
+
+        # Create the screen
+        self.screen.fill((255, 255, 255))  # Fill the screen with white color
+
+        # Draw the grid
+        for y, row in enumerate(grid):
+            for x, cell in enumerate(row):
+                color = self.color_mapping.get(cell, (255, 255, 255))  # Default to white if not found
+                pg.draw.rect(self.screen, color, (x * cell_size, y * cell_size, cell_size, cell_size))
+
+        # Update the display
+        pg.display.flip()
 
     def show_tiles(self, tiles):
         # todo: show tile weight next to or in the tile.
@@ -118,7 +137,7 @@ class WFCVisualizer:
 
     def show_neighbors(
         self,
-        adjacency: dict,
+        neighbors: dict,
     ) -> None:
         """ """
         pg.font.init()
@@ -127,11 +146,11 @@ class WFCVisualizer:
 
         self.screen.fill((255, 255, 255))
 
-        key_to_check = rd.choice(list(adjacency.keys()))
-        key_to_check = Tile((('B', 'B', 'B'), ('B', 'C', 'C'), ('B', 'C', 'C')))
+        key_to_check = rd.choice(list(neighbors.keys()))
+        key_to_check = Tile((('A', 'A', 'A'), ('B', 'B', 'B'), ('C', 'C', 'C')))
 
         grid_height = max(
-            (len(value) for value in adjacency[key_to_check].values() if len(value) > grid_height),
+            (len(value) for value in neighbors[key_to_check].values() if len(value) > grid_height),
             default=grid_height,
         )
         self.grid_dimensions = Size(
@@ -145,12 +164,12 @@ class WFCVisualizer:
         self._draw_tile(key_to_check, x, y)
 
         # Draw directions.
-        for i, direction in enumerate(adjacency[key_to_check].keys()):
+        for i, direction in enumerate(neighbors[key_to_check].keys()):
             x, y = self._compute_tile_position(i * 2 + (1 / 3), 2)
             text = font.render(direction.capitalize(), True, (0, 0, 0))
             self.screen.blit(text, (x, y))
 
-            for j, neighbor_tile in enumerate(adjacency[key_to_check][direction]):
+            for j, neighbor_tile in enumerate(neighbors[key_to_check][direction]):
                 x, y = self._compute_tile_position(i * 2, 4 + j)
                 try:
                     self._draw_tile(neighbor_tile, x, y)
