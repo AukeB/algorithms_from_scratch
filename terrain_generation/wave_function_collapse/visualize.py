@@ -51,11 +51,11 @@ class WFCVisualizer:
         return tile_size, cell_size
 
     def _compute_tile_position(self, row_tile_idx, col_tile_idx):
-        x = self.margin_size + col_tile_idx * self.tile_size.width
         y = self.margin_size + row_tile_idx * self.tile_size.height
-        return x, y
+        x = self.margin_size + col_tile_idx * self.tile_size.width
+        return y, x
 
-    def _draw_tile(self, tile, x, y):
+    def draw_tile(self, tile, y, x):
         if tile is None:
             # Todo: Handle cells in superposition: Add the entropy grid as function argument and take average of rgb values.
             pass
@@ -71,24 +71,24 @@ class WFCVisualizer:
                     )
                     pg.draw.rect(self.screen, cell_value, cell_rect)
 
-    def visualize(self, grid, entropy_grid):
+    def visualize(self, grid):
         """ """
         pg.font.init()
-        font = pg.font.SysFont("Arial", 12)
+        font = pg.font.SysFont("Arial", 8)
         self.screen.fill((0, 0, 0))
 
         for row_tile_idx in range(self.grid_dimensions.height):
             for col_tile_idx in range(self.grid_dimensions.width):
-                x, y = self._compute_tile_position(row_tile_idx, col_tile_idx)
-                tile_value = grid[row_tile_idx][col_tile_idx]
-                self._draw_tile(tile_value, x, y)
+                y_pixel, x_pixel = self._compute_tile_position(row_tile_idx, col_tile_idx)
+                tile = grid[row_tile_idx][col_tile_idx].tile
+                self.draw_tile(tile, y_pixel, x_pixel)
                 entropy_value = font.render(
-                    str(len(entropy_grid[row_tile_idx][col_tile_idx])),
+                    str(len(grid[row_tile_idx][col_tile_idx].options)),
                     True,
                     (255, 255, 255),
                 )
                 self.screen.blit(
-                    entropy_value, (x, y)
+                    entropy_value, (x_pixel, y_pixel)
                 )  # Todo: clear screen when entropy_value has changed for (x, y)
 
         pg.display.flip()

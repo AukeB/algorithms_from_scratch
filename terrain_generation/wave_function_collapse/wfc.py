@@ -101,7 +101,7 @@ class WaveFunctionCollapse:
     ) -> list[list[str]]:
         """ """
         grid = [
-            [Cell(self.tile_set) for _ in range(self.grid_dimensions.width)] for _ in range(self.grid_dimensions.height)
+            [Cell(self.tile_set.copy()) for _ in range(self.grid_dimensions.width)] for _ in range(self.grid_dimensions.height)
         ]
         return grid
 
@@ -121,9 +121,9 @@ class WaveFunctionCollapse:
                 valid_tiles = self.neighbors.get(self.grid[y][x].tile, {}).get(direction, set())
                 self.grid[ny][nx].options &= valid_tiles
                 
-                # if len(self.entropy_grid[ny][nx]) == 0:
-                #     self.wfc_visualizer.visualize(self.grid, self.entropy_grid)
-                #     time.sleep(50)
+                if len(self.grid[ny][nx].options) == 0:
+                    self.wfc_visualizer.visualize(self.grid)
+                    time.sleep(50)
     
     def collapse_cell(
         self,
@@ -155,6 +155,7 @@ class WaveFunctionCollapse:
             if min_cell is None:
                 break
 
+
             # Collapse the wave function
             y, x = min_cell
             choices = list(self.grid[y][x].options)
@@ -164,4 +165,3 @@ class WaveFunctionCollapse:
             self.propagate(y, x)
 
             self.wfc_visualizer.visualize(self.grid)
-            time.sleep(1)
