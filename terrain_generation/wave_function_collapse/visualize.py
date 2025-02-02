@@ -1,6 +1,7 @@
 """ """
 
 import math
+import time
 import pygame as pg
 import random as rd
 from constants import Size, screen_resolution
@@ -20,14 +21,12 @@ class WFCVisualizer:
     ) -> None:
         """ """
         pg.init()
-
         self.screen_size = Size(screen_resolution[0], screen_resolution[1])
         self.grid_dimensions = grid_dimensions
         self.tile_dimensions = tile_dimensions
         self.margin_size = margin_size
         self.color_mapping = {v: k for k, v in color_mapping.items()}
         self.tile_size, self.cell_size = self._compute_tile_and_cell_size()
-
         self.screen = pg.display.set_mode((self.screen_size.width, self.screen_size.height))
 
     def _compute_tile_and_cell_size(
@@ -55,61 +54,42 @@ class WFCVisualizer:
         x = self.margin_size + col_tile_idx * self.tile_size.width
         return y, x
 
-    def draw_tile(self, tile, y, x):
-        if tile is None:
-            # Todo: Handle cells in superposition: Add the entropy grid as function argument and take average of rgb values.
-            pass
-        else:
-            for cell_row_idx in range(self.tile_dimensions.height):
-                for cell_col_idx in range(self.tile_dimensions.width):
-                    cell_value = self.color_mapping[tile.value[cell_col_idx][cell_row_idx]]
-                    cell_rect = pg.Rect(
-                        x + cell_row_idx * self.cell_size.width,
-                        y + cell_col_idx * self.cell_size.height,
-                        self.cell_size.width,
-                        self.cell_size.height,
-                    )
-                    pg.draw.rect(self.screen, cell_value, cell_rect)
+    def draw_tile(self, cell, y, x):
+        for cell_row_idx in range(self.tile_dimensions.height):
+            for cell_col_idx in range(self.tile_dimensions.width):
+                if cell.tile is None:
+                    cell_value = cell.superposition_tile[cell_col_idx][cell_row_idx]
+                else:
+                    cell_value = self.color_mapping[cell.tile.value[cell_col_idx][cell_row_idx]]
+
+                cell_rect = pg.Rect(
+                    x + cell_row_idx * self.cell_size.width,
+                    y + cell_col_idx * self.cell_size.height,
+                    self.cell_size.width,
+                    self.cell_size.height,
+                )
+                pg.draw.rect(self.screen, cell_value, cell_rect)
 
     def visualize(self, grid):
         """ """
         pg.font.init()
-        font = pg.font.SysFont("Arial", 8)
+        font = pg.font.SysFont("Arial", 12)
         self.screen.fill((0, 0, 0))
 
         for row_tile_idx in range(self.grid_dimensions.height):
             for col_tile_idx in range(self.grid_dimensions.width):
                 y_pixel, x_pixel = self._compute_tile_position(row_tile_idx, col_tile_idx)
-                tile = grid[row_tile_idx][col_tile_idx].tile
+                tile = grid[row_tile_idx][col_tile_idx]
                 self.draw_tile(tile, y_pixel, x_pixel)
-                entropy_value = font.render(
-                    str(len(grid[row_tile_idx][col_tile_idx].options)),
-                    True,
-                    (255, 255, 255),
-                )
-                self.screen.blit(
-                    entropy_value, (x_pixel, y_pixel)
-                )  # Todo: clear screen when entropy_value has changed for (x, y)
-
-        pg.display.flip()
-    
-    def test_visualize(self, grid, cell_size=30):
-        # Define the window size based on grid size and cell size
-        rows = len(grid)
-        cols = len(grid[0])
-        width = cols * cell_size
-        height = rows * cell_size
-
-        # Create the screen
-        self.screen.fill((255, 255, 255))  # Fill the screen with white color
-
-        # Draw the grid
-        for y, row in enumerate(grid):
-            for x, cell in enumerate(row):
-                color = self.color_mapping.get(cell, (255, 255, 255))  # Default to white if not found
-                pg.draw.rect(self.screen, color, (x * cell_size, y * cell_size, cell_size, cell_size))
-
-        # Update the display
+                # entropy_value = font.render(
+                #     str(len(grid[row_tile_idx][col_tile_idx].options)),
+                #     True,
+                #     (255, 255, 255),
+                # )
+                # self.screen.blit(
+                #     entropy_value, (x_pixel, y_pixel)
+                # )
+        #time.sleep(0.1)
         pg.display.flip()
 
     def show_tiles(self, tiles):
@@ -161,18 +141,18 @@ class WFCVisualizer:
 
         # Draw center tile.
         x, y = self._compute_tile_position((self.grid_dimensions.height - 1) / 2, 0)
-        self._draw_tile(key_to_check, x, y)
+        self.draw_tile(key_to_check, x, y)
 
         # Draw directions.
         for i, direction in enumerate(neighbors[key_to_check].keys()):
             x, y = self._compute_tile_position(i * 2 + (1 / 3), 2)
             text = font.render(direction.capitalize(), True, (0, 0, 0))
-            self.screen.blit(text, (x, y))
+            self.screen.blit(text, (y, x))
 
             for j, neighbor_tile in enumerate(neighbors[key_to_check][direction]):
                 x, y = self._compute_tile_position(i * 2, 4 + j)
                 try:
-                    self._draw_tile(neighbor_tile, x, y)
+                    self.draw_tile(neighbor_tile, x, y)
                 except:
                     pass
 

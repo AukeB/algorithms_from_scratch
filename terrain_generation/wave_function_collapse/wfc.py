@@ -20,6 +20,7 @@ class WaveFunctionCollapse:
         self.bitmap_dimensions = Size(len(self.bitmap[0]), len(self.bitmap))
         self.grid_dimensions = grid_dimensions
         self.tile_dimensions = tile_dimensions
+        self.color_mapping = color_mapping
         self._check_tile_and_bitmap_dimensions()
         self.tile_weights, self.all_tiles = self.compute_tiles_and_weights()
         self.tile_set = set(self.tile_weights.keys())
@@ -29,12 +30,14 @@ class WaveFunctionCollapse:
         self.wfc_visualizer = WFCVisualizer(
             grid_dimensions=self.grid_dimensions,
             tile_dimensions=tile_dimensions,
-            color_mapping=color_mapping,
+            color_mapping=self.color_mapping,
         )
 
         # #self.wfc_visualizer.show_tiles(self.all_tiles)
         # #self.wfc_visualizer.show_tiles(self.tile_weights)
-        # #self.wfc_visualizer.show_neighbors(self.neighbors)
+        # self.wfc_visualizer.show_neighbors(self.neighbors)
+        # To do: make a sort of test environment within pygame with buttons
+        # something like: self.wfc_visualizer.test_environment()
 
     def _check_tile_and_bitmap_dimensions(self):
         min_bitmap_dim = min(self.bitmap_dimensions.width, self.bitmap_dimensions.height)
@@ -85,13 +88,13 @@ class WaveFunctionCollapse:
 
         for tile in self.tile_set:
             for other_tile in self.tile_set:
-                if tile.up == other_tile.down:
+                if tile.up == other_tile.flip_vertically(other_tile.down):
                     neighbors[tile]["up"].add(other_tile)
-                if tile.down == other_tile.up:
+                if tile.down == other_tile.flip_vertically(other_tile.up):
                     neighbors[tile]["down"].add(other_tile)
-                if tile.left == other_tile.right:
+                if tile.left == other_tile.flip_horizontally(other_tile.right):
                     neighbors[tile]["left"].add(other_tile)
-                if tile.right == other_tile.left:
+                if tile.right == other_tile.flip_horizontally(other_tile.left):
                     neighbors[tile]["right"].add(other_tile)
 
         return neighbors
@@ -101,7 +104,7 @@ class WaveFunctionCollapse:
     ) -> list[list[str]]:
         """ """
         grid = [
-            [Cell(self.tile_set.copy()) for _ in range(self.grid_dimensions.width)] for _ in range(self.grid_dimensions.height)
+            [Cell(self.tile_set.copy(), self.tile_weights, self.color_mapping) for _ in range(self.grid_dimensions.width)] for _ in range(self.grid_dimensions.height)
         ]
         return grid
 
@@ -120,6 +123,10 @@ class WaveFunctionCollapse:
             ):
                 valid_tiles = self.neighbors.get(self.grid[y][x].tile, {}).get(direction, set())
                 self.grid[ny][nx].options &= valid_tiles
+                self.grid[ny][nx].compute_superposition_tile(
+                    tile_weights=self.tile_weights,
+                    color_mapping=self.color_mapping,
+                )
                 
                 if len(self.grid[ny][nx].options) == 0:
                     self.wfc_visualizer.visualize(self.grid)
@@ -135,6 +142,7 @@ class WaveFunctionCollapse:
         self.grid[y][x].options = []
         self.grid[y][x].collapsed = True
         self.grid[y][x].tile = tile
+        self.grid[y][x].superposition_tile = None
 
     def collapse(
         self,
@@ -142,7 +150,7 @@ class WaveFunctionCollapse:
         """ """
         while True:
             min_entropy = float("inf")
-            min_cell = None
+            min_cells = []
 
             for cell_y in range(self.grid_dimensions.width):
                 for cell_x in range(self.grid_dimensions.height):
@@ -150,10 +158,15 @@ class WaveFunctionCollapse:
                         options = self.grid[cell_y][cell_x].options
                         if len(options) < min_entropy:
                             min_entropy = len(options)
-                            min_cell = (cell_y, cell_x)
+                            min_cells = [(cell_y, cell_x)]
+                        elif len(options) == min_entropy:
+                            min_cells.append((cell_y, cell_x))
 
-            if min_cell is None:
+            if not min_cells:
+                time.sleep(3)
                 break
+
+            min_cell = rd.choice(min_cells)
 
 
             # Collapse the wave function
