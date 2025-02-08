@@ -10,14 +10,14 @@ bitmap_utils = BitmapUtils()
 def main():
     bitmap = bitmap_utils.read_bitmap_from_excel(
         relative_dir_path="terrain_generation/wave_function_collapse/bitmaps",
-        file_name="flowers.xlsx",
+        file_name="mountains.xlsx",
         export_as_png=True,
     )
 
     color_mapping = bitmap_utils.create_color_mapping(rgb_size=bitmap)
     bitmap = bitmap_utils.apply_color_mapping(rgb_size=bitmap, color_mapping=color_mapping)
 
-    grid_dim = 20
+    grid_dim = 40
     tile_dim = 3
 
     grid_dimensions = Size(grid_dim, grid_dim)
