@@ -55,6 +55,22 @@ class WFCVisualizer:
         return y, x
 
     def draw_tile(self, cell, y, x):
+        """ """
+        if cell.tile is None:
+            cell_value = cell.superposition_tile[1][1]
+        else:
+            cell_value = self.color_mapping[cell.tile.value[1][1]]
+        
+        cell_rect = pg.Rect(
+            x,
+            y,
+            self.tile_size.width,
+            self.tile_size.height,
+        )
+
+        pg.draw.rect(self.screen, cell_value, cell_rect)
+
+        """
         for cell_row_idx in range(self.tile_dimensions.height):
             for cell_col_idx in range(self.tile_dimensions.width):
                 if cell.tile is None:
@@ -69,6 +85,7 @@ class WFCVisualizer:
                     self.cell_size.height,
                 )
                 pg.draw.rect(self.screen, cell_value, cell_rect)
+        """
 
     def visualize(self, grid):
         """ """
