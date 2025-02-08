@@ -6,8 +6,10 @@ from cell import Cell
 from visualize import WFCVisualizer
 from constants import Size, directions
 
+
 class WaveFunctionCollapse:
     """ """
+
     def __init__(
         self,
         bitmap: list[list[str]],
@@ -76,7 +78,7 @@ class WaveFunctionCollapse:
                 tile: Tile = self._extract_tile(x, y)
                 tile_count[tile] += 1
                 all_tiles.append(tile)
-        
+
         tile_weights = {tile: count / total_occurrences for tile, count in tile_count.items()}
         return tile_weights, all_tiles
 
@@ -88,23 +90,31 @@ class WaveFunctionCollapse:
 
         for tile in self.tile_set:
             for other_tile in self.tile_set:
-                if tile.up == other_tile.flip_vertically(other_tile.down):
+                # if tile.up == other_tile.flip_vertically(other_tile.down):
+                if tile.up == other_tile.down:
                     neighbors[tile]["up"].add(other_tile)
-                if tile.down == other_tile.flip_vertically(other_tile.up):
+                # if tile.down == other_tile.flip_vertically(other_tile.up):
+                if tile.down == other_tile.up:
                     neighbors[tile]["down"].add(other_tile)
-                if tile.left == other_tile.flip_horizontally(other_tile.right):
+                # if tile.left == other_tile.flip_horizontally(other_tile.right):
+                if tile.left == other_tile.right:
                     neighbors[tile]["left"].add(other_tile)
-                if tile.right == other_tile.flip_horizontally(other_tile.left):
+                # if tile.right == other_tile.flip_horizontally(other_tile.left):
+                if tile.right == other_tile.left:
                     neighbors[tile]["right"].add(other_tile)
 
         return neighbors
-    
+
     def initialize_grid(
         self,
     ) -> list[list[str]]:
         """ """
         grid = [
-            [Cell(self.tile_set.copy(), self.tile_weights, self.color_mapping) for _ in range(self.grid_dimensions.width)] for _ in range(self.grid_dimensions.height)
+            [
+                Cell(self.tile_set.copy(), self.tile_weights, self.color_mapping)
+                for _ in range(self.grid_dimensions.width)
+            ]
+            for _ in range(self.grid_dimensions.height)
         ]
         return grid
 
@@ -127,17 +137,12 @@ class WaveFunctionCollapse:
                     tile_weights=self.tile_weights,
                     color_mapping=self.color_mapping,
                 )
-                
+
                 if len(self.grid[ny][nx].options) == 0:
                     self.wfc_visualizer.visualize(self.grid)
                     time.sleep(50)
-    
-    def collapse_cell(
-        self,
-        y: int,
-        x: int,
-        tile: tuple
-    ) -> None:
+
+    def collapse_cell(self, y: int, x: int, tile: tuple) -> None:
         """ """
         self.grid[y][x].options = []
         self.grid[y][x].collapsed = True

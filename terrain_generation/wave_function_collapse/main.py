@@ -1,9 +1,11 @@
 """ """
+
 from bitmap import BitmapUtils
 from wfc import WaveFunctionCollapse
 from constants import Size
 
 bitmap_utils = BitmapUtils()
+
 
 def main():
     bitmap = bitmap_utils.read_bitmap_from_excel(
@@ -21,7 +23,6 @@ def main():
     grid_dimensions = Size(grid_dim, grid_dim)
     tile_dimensions = Size(tile_dim, tile_dim)
 
-
     for _ in range(10):
         wfc = WaveFunctionCollapse(
             bitmap=bitmap,
@@ -31,6 +32,7 @@ def main():
         )
 
         wfc.collapse_grid()
+
 
 if __name__ == "__main__":
     main()

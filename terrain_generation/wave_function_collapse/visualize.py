@@ -89,7 +89,7 @@ class WFCVisualizer:
                 # self.screen.blit(
                 #     entropy_value, (x_pixel, y_pixel)
                 # )
-        #time.sleep(0.1)
+        # time.sleep(0.1)
         pg.display.flip()
 
     def show_tiles(self, tiles):
@@ -127,7 +127,7 @@ class WFCVisualizer:
         self.screen.fill((255, 255, 255))
 
         key_to_check = rd.choice(list(neighbors.keys()))
-        key_to_check = Tile((('A', 'A', 'A'), ('B', 'B', 'B'), ('C', 'C', 'C')))
+        key_to_check = Tile((("A", "A", "A"), ("B", "B", "B"), ("C", "C", "C")))
 
         grid_height = max(
             (len(value) for value in neighbors[key_to_check].values() if len(value) > grid_height),

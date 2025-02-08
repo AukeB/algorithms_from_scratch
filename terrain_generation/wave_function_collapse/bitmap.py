@@ -6,8 +6,10 @@ from collections import namedtuple
 
 Size = namedtuple("Size", ["width", "height"])
 
+
 class BitmapUtils:
     """ """
+
     def __init__(
         self,
         output_file_path_bitmap_images="terrain_generation/wave_function_collapse/bitmaps/",
@@ -67,9 +69,7 @@ class BitmapUtils:
                     for dy in range(cell_size):
                         img.putpixel((x * cell_size + dx, y * cell_size + dy), color)
 
-        image_filename = (
-            self.output_file_path_bitmap_images + file_name.split(".")[0] + ".png"
-        )
+        image_filename = self.output_file_path_bitmap_images + file_name.split(".")[0] + ".png"
         img.save(image_filename, "PNG")
 
         logging.info(f"Bitmap exported as {image_filename}")
@@ -101,7 +101,7 @@ class BitmapUtils:
                 color_hex = cell.fill.start_color.index
                 color_rgb = self._hex_to_rgb(
                     color_hex=color_hex[2:]
-                ) # First two elements contain transparency/alpha/opacity.
+                )  # First two elements contain transparency/alpha/opacity.
                 bitmap_row.append(color_rgb)
 
             bitmap.append(bitmap_row)
