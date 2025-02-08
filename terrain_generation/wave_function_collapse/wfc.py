@@ -118,29 +118,45 @@ class WaveFunctionCollapse:
         ]
         return grid
 
-    def propagate(
-        self,
-        y: int,
-        x: int,
-    ) -> None:
+    def propagate(self, y: int, x: int, recursion_depth: int) -> None:
         """ """
+        if recursion_depth <= 0:
+            return
+
         for direction, (dy, dx) in directions.items():
             ny, nx = y + dy, x + dx
             if (
                 0 <= nx < self.grid_dimensions.width
                 and 0 <= ny < self.grid_dimensions.height
                 and self.grid[ny][nx].collapsed == False
+                and self.grid[ny][nx].propagated == False
             ):
-                valid_tiles = self.neighbors.get(self.grid[y][x].tile, {}).get(direction, set())
+                if self.grid[y][x].tile:
+                    valid_tiles = self.neighbors.get(self.grid[y][x].tile, {}).get(direction, set())
+                else:
+                    valid_tiles = set()
+                    for option in self.grid[y][x].options:
+                        valid_tiles |= self.neighbors.get(option, {}).get(
+                            direction, set()
+                        )  # Set union operator.
                 self.grid[ny][nx].options &= valid_tiles
+                self.grid[ny][nx].propagated = True
                 self.grid[ny][nx].compute_superposition_tile(
                     tile_weights=self.tile_weights,
                     color_mapping=self.color_mapping,
                 )
 
+                self.propagate(ny, nx, recursion_depth - 1)
+
                 if len(self.grid[ny][nx].options) == 0:
                     self.wfc_visualizer.visualize(self.grid)
                     time.sleep(50)
+
+        [
+            setattr(self.grid[y][x], "propagated", False)
+            for y in range(self.grid_dimensions.height)
+            for x in range(self.grid_dimensions.width)
+        ]
 
     def collapse_cell(self, y: int, x: int, tile: tuple) -> None:
         """ """
@@ -179,6 +195,6 @@ class WaveFunctionCollapse:
             weights = [self.tile_weights[tile] for tile in choices]
             chosen_tile = rd.choices(choices, weights)[0]
             self.collapse_cell(y, x, chosen_tile)
-            self.propagate(y, x)
+            self.propagate(y, x, recursion_depth=5)
 
             self.wfc_visualizer.visualize(self.grid)

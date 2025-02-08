@@ -60,7 +60,7 @@ class WFCVisualizer:
             cell_value = cell.superposition_tile[1][1]
         else:
             cell_value = self.color_mapping[cell.tile.value[1][1]]
-        
+
         cell_rect = pg.Rect(
             x,
             y,

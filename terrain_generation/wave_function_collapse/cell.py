@@ -16,6 +16,7 @@ class Cell:  # Todo: change name because each element of grid as well as tile is
         self.collapsed = False
         self.tile = None
         self.superposition_tile = None
+        self.propagated = False
         self.compute_superposition_tile(
             tile_weights=tile_weights,
             color_mapping=color_mapping,
