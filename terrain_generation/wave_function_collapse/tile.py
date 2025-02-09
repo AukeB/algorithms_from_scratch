@@ -23,11 +23,3 @@ class Tile:
 
     def __eq__(self, other):
         return isinstance(other, Tile) and self.value == other.value
-
-    def flip_horizontally(self, edge: tuple[tuple[str]]) -> tuple[tuple[str]]:
-        """Flips an edge horizontally (reverses each row)."""
-        return tuple(row[::-1] for row in edge)
-
-    def flip_vertically(self, edge: tuple[tuple[str]]) -> tuple[tuple[str]]:
-        """Flips an edge vertically (reverses the order of rows)."""
-        return edge[::-1]

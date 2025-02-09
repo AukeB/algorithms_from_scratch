@@ -1,7 +1,7 @@
 """ """
 
 
-class Cell:  # Todo: change name because each element of grid as well as tile is now called a cell.
+class GridCell:
     """ """
 
     def __init__(

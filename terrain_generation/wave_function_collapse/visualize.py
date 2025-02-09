@@ -4,7 +4,7 @@ import math
 import time
 import pygame as pg
 import random as rd
-from constants import Size, screen_resolution
+from constants import Size
 from tile import Tile
 
 
@@ -13,15 +13,16 @@ class WFCVisualizer:
 
     def __init__(
         self,
+        config: dict,
         grid_dimensions,
         tile_dimensions,
         color_mapping: dict[tuple[int, int, int], str],
-        screen_resolution: tuple[int, int] = screen_resolution,
         margin_size: int = 20,
     ) -> None:
         """ """
         pg.init()
-        self.screen_size = Size(screen_resolution[0], screen_resolution[1])
+        self.config = config
+        self.screen_size = Size(self.config['screen_resolution'][0], self.config['screen_resolution'][1])
         self.grid_dimensions = grid_dimensions
         self.tile_dimensions = tile_dimensions
         self.margin_size = margin_size

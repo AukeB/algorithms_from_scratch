@@ -2,36 +2,39 @@
 
 from bitmap import BitmapUtils
 from wfc import WaveFunctionCollapse
-from constants import Size
+from config_manager import ConfigManager
+from constants import Size, config_core_file_path, config_runtime_file_path
 
-bitmap_utils = BitmapUtils()
+
 
 
 def main():
-    bitmap = bitmap_utils.read_bitmap_from_excel(
-        relative_dir_path="terrain_generation/wave_function_collapse/bitmaps",
-        file_name="mountains.xlsx",
-        export_as_png=True,
+    # Read configs
+    config_manager = ConfigManager(
+        config_core_relative_path=config_core_file_path,
+        config_runtime_relative_path=config_runtime_file_path,
     )
 
-    color_mapping = bitmap_utils.create_color_mapping(rgb_size=bitmap)
-    bitmap = bitmap_utils.apply_color_mapping(rgb_size=bitmap, color_mapping=color_mapping)
+    config_core, config_runtime = config_manager.read_configs()
 
-    grid_dim = 40
-    tile_dim = 3
+    # Read bitmap
+    bitmap_utils = BitmapUtils(config=config_core, file_name=config_runtime['file_name'])
+    bitmap = bitmap_utils.read_bitmap_from_excel()
+    color_mapping = bitmap_utils.create_color_mapping(bitmap=bitmap)
+    bitmap = bitmap_utils.apply_color_mapping(bitmap=bitmap, color_mapping=color_mapping)
 
-    grid_dimensions = Size(grid_dim, grid_dim)
-    tile_dimensions = Size(tile_dim, tile_dim)
+    grid_dimensions: Size[int, int] = Size(config_runtime['grid_dim'], config_runtime['grid_dim'])
+    tile_dimensions: Size[int, int] = Size(config_runtime['tile_dim'], config_runtime['tile_dim'])
 
-    for _ in range(10):
-        wfc = WaveFunctionCollapse(
-            bitmap=bitmap,
-            grid_dimensions=grid_dimensions,
-            tile_dimensions=tile_dimensions,
-            color_mapping=color_mapping,
-        )
+    # for _ in range(10):
+    #     wfc = WaveFunctionCollapse(
+    #         bitmap=bitmap,
+    #         grid_dimensions=grid_dimensions,
+    #         tile_dimensions=tile_dimensions,
+    #         color_mapping=color_mapping,
+    #     )
 
-        wfc.collapse_grid()
+    #     wfc.collapse_grid()
 
 
 if __name__ == "__main__":
