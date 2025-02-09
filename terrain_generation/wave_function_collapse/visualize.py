@@ -22,7 +22,9 @@ class WFCVisualizer:
         """ """
         pg.init()
         self.config = config
-        self.screen_size = Size(self.config['screen_resolution'][0], self.config['screen_resolution'][1])
+        self.screen_size = Size(
+            self.config["screen_resolution"][0], self.config["screen_resolution"][1]
+        )
         self.grid_dimensions = grid_dimensions
         self.tile_dimensions = tile_dimensions
         self.margin_size = margin_size

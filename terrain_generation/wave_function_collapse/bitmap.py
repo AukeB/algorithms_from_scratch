@@ -10,11 +10,8 @@ Size = namedtuple("Size", ["width", "height"])
 
 class BitmapUtils:
     """ """
-    def __init__(
-        self,
-        config: dict,
-        file_name: str
-    ) -> None:
+
+    def __init__(self, config: dict, file_name: str) -> None:
         """ """
         self.config = config
         self.file_name = file_name
@@ -31,7 +28,7 @@ class BitmapUtils:
         self,
     ) -> tuple[list[list[str]], list[list[str]]]:
         """ """
-        relative_dir_path: str = self.config['paths']['bitmaps_dir']
+        relative_dir_path: str = self.config["paths"]["bitmaps_dir"]
         relative_file_path = os.path.join(relative_dir_path, self.file_name)
 
         # This assumes the bitmap is always on the first tab of the excel file.
@@ -56,7 +53,7 @@ class BitmapUtils:
                 bitmap_row.append(color_rgb)
 
             bitmap.append(bitmap_row)
-        if self.config['png_bitmap']['export']:
+        if self.config["png_bitmap"]["export"]:
             self.export_bitmap_as_png(bitmap=bitmap, file_name=self.file_name)
 
         return bitmap
@@ -67,7 +64,7 @@ class BitmapUtils:
         file_name: str,
     ) -> None:
         """ """
-        bitmap_cell_size: int = self.config['png_bitmap']['cell_size']
+        bitmap_cell_size: int = self.config["png_bitmap"]["cell_size"]
         bitmap_dimensions = Size(len(bitmap), len(bitmap[0]))
         img_width = bitmap_cell_size * bitmap_dimensions.width
         img_height = bitmap_cell_size * bitmap_dimensions.height
@@ -80,7 +77,7 @@ class BitmapUtils:
                     for dy in range(bitmap_cell_size):
                         img.putpixel((x * bitmap_cell_size + dx, y * bitmap_cell_size + dy), color)
 
-        image_filename: str = self.config['paths']['bitmaps_dir'] + Path(file_name).stem + ".png"
+        image_filename: str = self.config["paths"]["bitmaps_dir"] + Path(file_name).stem + ".png"
         img.save(image_filename, "PNG")
 
         logging.info(f"Bitmap exported as {image_filename}")

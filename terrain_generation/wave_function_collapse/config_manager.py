@@ -1,4 +1,5 @@
 """ """
+
 import yaml
 from pathlib import Path
 from typing import Dict, List, Literal
@@ -18,8 +19,8 @@ class PngBitmapConfig(BaseModel):
 class ConfigCoreSchema(BaseModel):
     screen_resolution: List[int] = Field(..., min_items=2, max_items=2)
     directions: Dict[str, List[int]]
-    mode_model: Literal['overlapping', 'simple-tiled', 'even-simpler-tiled']
-    mode_boundary_conditions: Literal['wrap_around', 'clamping', 'mirroring', 'noise']
+    mode_model: Literal["overlapping", "simple-tiled", "even-simpler-tiled"]
+    mode_boundary_conditions: Literal["wrap_around", "clamping", "mirroring", "noise"]
     paths: Dict[str, str]
     bitmaps: Dict[str, BitmapConfig]
     png_bitmap: PngBitmapConfig
@@ -39,17 +40,19 @@ class ConfigManager:
     def read_configs(self):
         if not Path(self.config_core_relative_path).exists():
             raise FileNotFoundError(f"Config core file not found: {self.config_core_relative_path}")
-        
-        with open(self.config_core_relative_path, 'r', encoding='utf-8') as file:
+
+        with open(self.config_core_relative_path, "r", encoding="utf-8") as file:
             config_core = yaml.safe_load(file)
-        
+
         if not Path(self.config_runtime_relative_path).exists():
-            raise FileNotFoundError(f"Config runtime file not found: {self.config_runtime_relative_path}")
-        
-        with open(self.config_runtime_relative_path, 'r', encoding='utf-8') as file:
+            raise FileNotFoundError(
+                f"Config runtime file not found: {self.config_runtime_relative_path}"
+            )
+
+        with open(self.config_runtime_relative_path, "r", encoding="utf-8") as file:
             config_runtime = yaml.safe_load(file)
-        
+
         config_core = ConfigCoreSchema(**config_core).dict()
         config_runtime = ConfigRuntimeSchema(**config_runtime).dict()
-        
+
         return config_core, config_runtime

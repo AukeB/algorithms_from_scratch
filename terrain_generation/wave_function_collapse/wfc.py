@@ -122,7 +122,7 @@ class WaveFunctionCollapse:
 
     def propagate(self, y: int, x: int, recursion_depth: int) -> None:
         """ """
-        directions: dict = self.config['directions']
+        directions: dict = self.config["directions"]
         if recursion_depth <= 0:
             return
 
@@ -141,9 +141,9 @@ class WaveFunctionCollapse:
                     for option in self.grid[y][x].options:
                         valid_tiles |= self.neighbors.get(option, {}).get(
                             direction, set()
-                        ) # Set union operator.
-                        
-                self.grid[ny][nx].options &= valid_tiles # Set intersection operator.
+                        )  # Set union operator.
+
+                self.grid[ny][nx].options &= valid_tiles  # Set intersection operator.
                 self.grid[ny][nx].propagated = True
                 self.grid[ny][nx].compute_superposition_tile(
                     tile_weights=self.tile_weights,
