@@ -62,6 +62,7 @@ class BitmapUtils:
         self,
         bitmap: list[list[tuple[int, int, int]]],
         file_name: str,
+        output_file_extension: str = ".png",
     ) -> None:
         """ """
         bitmap_cell_size: int = self.config["png_bitmap"]["cell_size"]
@@ -69,7 +70,11 @@ class BitmapUtils:
         img_width = bitmap_cell_size * bitmap_dimensions.width
         img_height = bitmap_cell_size * bitmap_dimensions.height
 
-        img = Image.new("RGB", (img_width, img_height), color=(255, 255, 255))
+        img = Image.new(
+            "RGB",
+            (img_width, img_height),
+            color=tuple(self.config["png_bitmap"]["default_background_color"]),
+        )
 
         for y, row in enumerate(bitmap):
             for x, color in enumerate(row):
@@ -77,8 +82,10 @@ class BitmapUtils:
                     for dy in range(bitmap_cell_size):
                         img.putpixel((x * bitmap_cell_size + dx, y * bitmap_cell_size + dy), color)
 
-        image_filename: str = self.config["paths"]["bitmaps_dir"] + Path(file_name).stem + ".png"
-        img.save(image_filename, "PNG")
+        image_filename: str = (
+            self.config["paths"]["bitmaps_dir"] + Path(file_name).stem + output_file_extension
+        )
+        img.save(image_filename)
 
         logging.info(f"Bitmap exported as {image_filename}")
 
