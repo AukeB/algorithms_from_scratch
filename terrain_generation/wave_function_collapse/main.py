@@ -24,15 +24,15 @@ def main():
     grid_dimensions: Size[int, int] = Size(config_runtime["grid_dim"], config_runtime["grid_dim"])
     tile_dimensions: Size[int, int] = Size(config_runtime["tile_dim"], config_runtime["tile_dim"])
 
-    # for _ in range(10):
-    #     wfc = WaveFunctionCollapse(
-    #         bitmap=bitmap,
-    #         grid_dimensions=grid_dimensions,
-    #         tile_dimensions=tile_dimensions,
-    #         color_mapping=color_mapping,
-    #     )
+    for _ in range(10):
+        wfc = WaveFunctionCollapse(
+            bitmap=bitmap,
+            grid_dimensions=grid_dimensions,
+            tile_dimensions=tile_dimensions,
+            color_mapping=color_mapping,
+        )
 
-    #     wfc.collapse_grid()
+        wfc.collapse_grid()
 
 
 if __name__ == "__main__":
