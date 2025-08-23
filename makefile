@@ -1,5 +1,6 @@
 make ruff:
-	ruff check . --fix
+	ruff check miscellaneous --fix
+	ruff format miscellaneous
 
 make git:
 	git add *

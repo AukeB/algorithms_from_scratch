@@ -1,7 +1,6 @@
 """ """
 
 import math
-import time
 import pygame as pg
 import random as rd
 from constants import Size
