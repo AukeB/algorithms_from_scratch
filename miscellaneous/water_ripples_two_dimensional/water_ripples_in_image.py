@@ -60,15 +60,6 @@ class WaterRipples:
         self.screen = pg.display.set_mode((self.window_width, self.window_height))
         self.clock = pg.time.Clock()
     
-    def _swap_states(self) -> None:
-        """
-        Swap the current and previous simulation states.
-
-        This avoids copying arrays: after each propagation step,
-        the roles of the two grids are exchanged.
-        """
-        self.current_state, self.previous_state = self.previous_state, self.current_state
-    
     def _propagate(self) -> None:
         """
         Perform one simulation step of wave propagation.
@@ -77,7 +68,11 @@ class WaterRipples:
         its four orthogonal neighbors in the previous state, minus the
         current value. The damping factor reduces amplitude to simulate
         energy loss.
+
+        Ater applying this algorithm, the current_state and previous_state
+        are swapped.
         """
+        # Compute neighbor sum matrix
         neighbor_sum = (
             self.previous_state[:-2, 1:-1] +
             self.previous_state[2:, 1:-1] +
@@ -85,11 +80,16 @@ class WaterRipples:
             self.previous_state[1:-1, 2:]
         )
 
+         # Apply ripple formula
         self.current_state[1:-1, 1:-1] = ( 
-            neighbor_sum / 2 - self.current_state[1:-1, 1:-1] # Apply ripple formula
+            neighbor_sum / 2 - self.current_state[1:-1, 1:-1]
         )
 
+        # Apply damping
         self.current_state[1:-1, 1:-1] *= self.damping
+
+        # Python swapping
+        self.current_state, self.previous_state = self.previous_state, self.current_state
 
     def _draw_current_state(
         self,
@@ -190,7 +190,6 @@ class WaterRipples:
             self.screen.fill((0, 0, 0))
             self._propagate()
             self._draw_current_state()
-            self._swap_states()
             
             pg.display.flip()
             self.clock.tick(self.framerate)
