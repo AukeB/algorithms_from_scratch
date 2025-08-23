@@ -104,7 +104,7 @@ class WaterRipples:
         t = arr / 255.0
         t = 0.2 + 0.8 * t  # remap 0→0.3, 255→1.0
 
-        colormap = cm.get_cmap("bone")
+        colormap = cm.get_cmap("hot")
         rgb_array = (colormap(t)[..., :3] * 255).astype(np.uint8)
 
         surface = pg.surfarray.make_surface(rgb_array.swapaxes(0, 1))
