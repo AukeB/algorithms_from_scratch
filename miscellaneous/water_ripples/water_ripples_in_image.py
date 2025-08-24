@@ -11,13 +11,13 @@ class WaterRipples:
         self,
         window_width: int = 2000,
         window_height: int = 2000,
-        number_of_columns: int = 100,
-        number_of_rows: int = 100,
+        number_of_columns: int = 10,
+        number_of_rows: int = 10,
         damping: float = 0.99,
         wave_brightness: int = 255,
         maximum_brightness: int = 255,
         cursor_splash_size: int = 2,
-        framerate: int = 30
+        framerate: int = 1
     ) -> None:
         """
         Initialize the ripple simulation class.
