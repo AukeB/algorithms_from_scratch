@@ -49,16 +49,24 @@ class WaterRipples:
         self.cursor_splash_size = cursor_splash_size
         self.framerate = framerate
 
-        self.current_state = np.zeros((number_of_rows, number_of_columns), dtype=np.float32)
-        self.previous_state = np.zeros((number_of_rows, number_of_columns), dtype=np.float32)
+        self.current_state = np.zeros(
+            (number_of_rows, number_of_columns), dtype=np.float32
+        )
+        self.previous_state = np.zeros(
+            (number_of_rows, number_of_columns), dtype=np.float32
+        )
 
-        self.previous_state[number_of_rows // 2, number_of_columns // 2] = self.wave_brightness
+        self.previous_state[number_of_rows // 2, number_of_columns // 2] = (
+            self.wave_brightness
+        )
 
         self.grid_cell_width = int(self.window_width / number_of_columns)
         self.grid_cell_height = int(self.window_height / number_of_rows)
 
         pg.init()
-        self.screen = pg.display.set_mode((self.window_width, self.window_height))
+        self.screen = pg.display.set_mode(
+            (self.window_width, self.window_height)
+        )
         self.clock = pg.time.Clock()
 
     def _propagate(self) -> None:
@@ -82,13 +90,18 @@ class WaterRipples:
         )
 
         # Apply ripple formula
-        self.current_state[1:-1, 1:-1] = neighbor_sum / 2 - self.current_state[1:-1, 1:-1]
+        self.current_state[1:-1, 1:-1] = (
+            neighbor_sum / 2 - self.current_state[1:-1, 1:-1]
+        )
 
         # Apply damping
         self.current_state[1:-1, 1:-1] *= self.damping
 
         # Python swapping
-        self.current_state, self.previous_state = self.previous_state, self.current_state
+        self.current_state, self.previous_state = (
+            self.previous_state,
+            self.current_state,
+        )
 
     def _draw_current_state(
         self,
@@ -109,17 +122,25 @@ class WaterRipples:
         scaled to the window size.
         """
         # All values smaller than 0 become 0, and larger than 255 become 255.
-        current_state: np.ndarray = np.clip(self.current_state, 0, 255).astype(np.float32)
+        current_state: np.ndarray = np.clip(self.current_state, 0, 255).astype(
+            np.float32
+        )
 
         # Scale from 0–255 to 0.3–1.0 (raise the floor so the darkest is lighter)
         normalized_state = current_state / self.maximum_brightness
         scaled_state = 0.1 + 0.8 * normalized_state  # remap 0→0.3, 255→1.0
 
         colormap = cm.get_cmap("bone")
-        rgb_array = (colormap(scaled_state)[..., :3] * self.maximum_brightness).astype(np.uint8)
+        rgb_array = (
+            colormap(scaled_state)[..., :3] * self.maximum_brightness
+        ).astype(np.uint8)
 
         trapezoid = {
-            key: (value * self.window_height if key.startswith("y") else value * self.window_width)
+            key: (
+                value * self.window_height
+                if key.startswith("y")
+                else value * self.window_width
+            )
             for key, value in normalized_trapezoid.items()
         }
 
@@ -128,16 +149,21 @@ class WaterRipples:
                 color = rgb_array[y][x]
 
                 x_left = trapezoid["x_top_left"] + (
-                    normalized_trapezoid["x_bottom_left"] - normalized_trapezoid["x_top_left"]
+                    normalized_trapezoid["x_bottom_left"]
+                    - normalized_trapezoid["x_top_left"]
                 ) * y * (self.window_width / self.number_of_columns)
                 x_right = trapezoid["x_top_right"] + (
-                    normalized_trapezoid["x_bottom_right"] - normalized_trapezoid["x_top_right"]
+                    normalized_trapezoid["x_bottom_right"]
+                    - normalized_trapezoid["x_top_right"]
                 ) * y * (self.window_height / self.number_of_rows)
-                scaled_grid_cell_width = (x_right - x_left) / self.number_of_columns
+                scaled_grid_cell_width = (
+                    x_right - x_left
+                ) / self.number_of_columns
                 left = x_left + x * scaled_grid_cell_width
 
                 scaled_grid_cell_height = self.grid_cell_height * (
-                    normalized_trapezoid["y_bottom"] - normalized_trapezoid["y_top"]
+                    normalized_trapezoid["y_bottom"]
+                    - normalized_trapezoid["y_top"]
                 )
                 top = trapezoid["y_top"] + y * scaled_grid_cell_height
 
@@ -147,7 +173,10 @@ class WaterRipples:
                     [
                         (left, top),
                         (left + scaled_grid_cell_width, top),
-                        (left + scaled_grid_cell_width, top + scaled_grid_cell_height),
+                        (
+                            left + scaled_grid_cell_width,
+                            top + scaled_grid_cell_height,
+                        ),
                         (left, top + scaled_grid_cell_height),
                     ],
                 )

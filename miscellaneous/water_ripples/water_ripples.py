@@ -49,16 +49,24 @@ class WaterRipples:
         self.cursor_splash_size = cursor_splash_size
         self.framerate = framerate
 
-        self.current_state = np.zeros((number_of_rows, number_of_columns), dtype=np.float32)
-        self.previous_state = np.zeros((number_of_rows, number_of_columns), dtype=np.float32)
+        self.current_state = np.zeros(
+            (number_of_rows, number_of_columns), dtype=np.float32
+        )
+        self.previous_state = np.zeros(
+            (number_of_rows, number_of_columns), dtype=np.float32
+        )
 
-        self.previous_state[number_of_rows // 2, number_of_columns // 2] = self.wave_brightness
+        self.previous_state[number_of_rows // 2, number_of_columns // 2] = (
+            self.wave_brightness
+        )
 
         self.grid_cell_width = int(self.window_width / number_of_columns)
         self.grid_cell_height = int(self.window_height / number_of_rows)
 
         pg.init()
-        self.screen = pg.display.set_mode((self.window_width, self.window_height))
+        self.screen = pg.display.set_mode(
+            (self.window_width, self.window_height)
+        )
         self.clock = pg.time.Clock()
 
     def _propagate(self) -> None:
@@ -82,13 +90,18 @@ class WaterRipples:
         )
 
         # Apply ripple formula
-        self.current_state[1:-1, 1:-1] = neighbor_sum / 2 - self.current_state[1:-1, 1:-1]
+        self.current_state[1:-1, 1:-1] = (
+            neighbor_sum / 2 - self.current_state[1:-1, 1:-1]
+        )
 
         # Apply damping
         self.current_state[1:-1, 1:-1] *= self.damping
 
         # Python swapping
-        self.current_state, self.previous_state = self.previous_state, self.current_state
+        self.current_state, self.previous_state = (
+            self.previous_state,
+            self.current_state,
+        )
 
     def _draw_current_state(self) -> None:
         """
@@ -99,7 +112,9 @@ class WaterRipples:
         scaled to the window size.
         """
         # All values smaller than 0 become 0, and larger than 255 become 255.
-        current_state: np.ndarray = np.clip(self.current_state, 0, 255).astype(np.float32)
+        current_state: np.ndarray = np.clip(self.current_state, 0, 255).astype(
+            np.float32
+        )
 
         # Scale from 0–255 to 0.3–1.0 (raise the floor so the darkest is lighter)
         normalized_state = current_state / self.maximum_brightness
@@ -112,10 +127,14 @@ class WaterRipples:
         # each grid element is converted to an 8-bit unsigned integers, the standard
         # format for image pixel data.
         colormap = cm.get_cmap("hot")
-        rgb_array = (colormap(scaled_state)[..., :3] * self.maximum_brightness).astype(np.uint8)
+        rgb_array = (
+            colormap(scaled_state)[..., :3] * self.maximum_brightness
+        ).astype(np.uint8)
 
         surface = pg.surfarray.make_surface(rgb_array.swapaxes(0, 1))
-        surface = pg.transform.scale(surface, (self.window_width, self.window_height))
+        surface = pg.transform.scale(
+            surface, (self.window_width, self.window_height)
+        )
 
         self.screen.blit(surface, (0, 0))
 
