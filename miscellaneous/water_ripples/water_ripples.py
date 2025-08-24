@@ -1,8 +1,64 @@
 """Module that simulates 2D water ripples using PyGame."""
 
+# Imports
+import numba
 import pygame as pg
 import numpy as np
 import matplotlib.cm as cm
+
+# Constants and algorithm parameters
+
+# Size and dimension related parameters
+WINDOW_WIDTH = 4000
+WINDOW_HEIGHT = 2500
+NUMBER_OF_COLUMNS = 200
+NUMBER_OF_ROWS = 125
+
+# Algorithm related parameters
+DAMPING = 0.99
+WAVE_BRIGHTNESS = 255
+MAXIMUM_BRIGHTNESS = 255
+
+# Modes
+RENDER_MODE = "surfarray"  # Options are ["surfarray", "rectangles"]
+RGB_MODE = "scaled_colormap"  # Options are ["grayscale", "colormap", "scaled_colormap"]
+PROPAGATE_MODE = "numba"  # Options are ["numba", "numpy", "iterative"]
+
+# Other parameter values
+CURSOR_SPLASH_SIZE = 2
+FRAMERATE = 120
+BACKGROUND_COLOR = (0, 0, 0)
+
+# Functions
+
+
+@numba.njit(parallel=True)
+def propagate_with_numba(
+    current_state: np.ndarray,
+    previous_state: np.ndarray,
+    damping: float,
+) -> None:
+    """
+    In-place mutation
+    """
+    for y in numba.prange(1, len(previous_state) - 1):
+        for x in range(1, len(previous_state[y]) - 1):
+            # Compute neighbor sum
+            neighbor_sum = (
+                previous_state[y - 1, x]
+                + previous_state[y + 1, x]
+                + previous_state[y, x - 1]
+                + previous_state[y, x + 1]
+            )
+
+            # Apply ripple formula
+            current_state[y, x] = neighbor_sum / 2 - current_state[y, x]
+
+            # Apply damping
+            current_state[y, x] *= damping
+
+
+# Classes
 
 
 class WaterRipples:
@@ -10,35 +66,61 @@ class WaterRipples:
 
     def __init__(
         self,
-        window_width: int = 2000,
-        window_height: int = 2000,
-        number_of_columns: int = 10,
-        number_of_rows: int = 10,
-        damping: float = 0.99,
-        wave_brightness: int = 255,
-        maximum_brightness: int = 255,
-        cursor_splash_size: int = 2,
-        framerate: int = 1,
+        window_width: int = WINDOW_WIDTH,
+        window_height: int = WINDOW_HEIGHT,
+        number_of_columns: int = NUMBER_OF_COLUMNS,
+        number_of_rows: int = NUMBER_OF_ROWS,
+        damping: float = DAMPING,
+        wave_brightness: int = WAVE_BRIGHTNESS,
+        maximum_brightness: int = MAXIMUM_BRIGHTNESS,
+        cursor_splash_size: int = CURSOR_SPLASH_SIZE,
+        framerate: int = FRAMERATE,
+        render_mode: str = RENDER_MODE,
+        rgb_mode: str = RGB_MODE,
+        propagate_mode: str = PROPAGATE_MODE,
+        background_color: tuple[int, int, int] = BACKGROUND_COLOR,
     ) -> None:
         """
         Initialize the ripple simulation class.
 
-        The simulation maintains two grids (previous_state and current_state). At
-        each step, values propagate from the previous grid to the current grid,
-        and then the grids are swapped.
+        The simulation maintains two grids (previous_state and current_state).
+        At each step, values propagate from the previous grid to the current
+        grid, and then the grids are swapped.
 
         Args:
             window_width: Width of the PyGame window in pixels.
             window_height: Height of the PyGame window in pixels.
             number_of_columns: Number of columns in the simulation grid.
             number_of_rows: Number of rows in the simulation grid.
-            damping: Factor between 0 and 1 that reduces wave amplitude each frame.
-            wave_brightness: Intensity value for the waves. Defaults to 255. While
-                the simulation itself allows values outside the range [0, 255], the
-                visualization clips to this range, so higher values effectively produce
-                higher visual contrast in the ripples.
+            damping: Factor between 0 and 1 that reduces wave amplitude each
+                frame.
+            wave_brightness: Intensity value for the waves. Defaults to 255.
+                While the simulation itself allows values outside the range
+                [0, 255], the visualization clips to this range, so higher
+                values effectively produce higher visual contrast in the
+                ripples.
+            maximum_brightness: Maximum brightness the visualization can display
+            cursor_splash_size (int): The size of the 'splash' when you click on
+                the screen
             framerate: Target framerate for rendering. Units: frames / second.
+            render_mode (str): The way you render the RGB data. Options are
+                "surfarray" (fast, blitting the entire rgb array on the surface
+                at once), and "rectangles" (iterating through the RGB array and
+                drawing each element as a rectangle on the surface).
+            rgb_mode (str): The method for converting your current state to an
+                RGB array. Options are "grayscale", "colormap" (uses matplotlib
+                color maps to visualize the RGB data), or "scaled_colormap".
+            propagate_mode (str): The method you use for computing the next
+                state (propagating). Options are "numba" (uses numba to compute
+                next state, converts python loops into executable machine code
+                very fast), "numpy" (uses numpy slicing and matrix
+                multiplication to compute next state, fast) or "iterative"
+                (iterates through grid and computese each next grid element
+                individually).
+            background_color (tuple(int, int, int)): The background color of the
+                canvas.
         """
+        # User input variables
         self.window_width = window_width
         self.window_height = window_height
         self.number_of_columns = number_of_columns
@@ -48,7 +130,16 @@ class WaterRipples:
         self.maximum_brightness = maximum_brightness
         self.cursor_splash_size = cursor_splash_size
         self.framerate = framerate
+        self.render_mode = render_mode
+        self.rgb_mode = rgb_mode
+        self.propagate_mode = propagate_mode
+        self.background_color = background_color
 
+        # Determine grid cell size
+        self.grid_cell_width = int(self.window_width / number_of_columns)
+        self.grid_cell_height = int(self.window_height / number_of_rows)
+
+        # Initialize with an empty state.
         self.current_state = np.zeros(
             (number_of_rows, number_of_columns), dtype=np.float32
         )
@@ -56,87 +147,17 @@ class WaterRipples:
             (number_of_rows, number_of_columns), dtype=np.float32
         )
 
+        # Add a 'splash' when starting the visualization
         self.previous_state[number_of_rows // 2, number_of_columns // 2] = (
             self.wave_brightness
         )
 
-        self.grid_cell_width = int(self.window_width / number_of_columns)
-        self.grid_cell_height = int(self.window_height / number_of_rows)
-
+        # Initialize PyGame
         pg.init()
         self.screen = pg.display.set_mode(
             (self.window_width, self.window_height)
         )
-        self.clock = pg.time.Clock()
-
-    def _propagate(self) -> None:
-        """
-        Perform one simulation step of wave propagation.
-
-        For each grid cell, the new value is computed as the average of
-        its four orthogonal neighbors in the previous state, minus the
-        current value. The damping factor reduces amplitude to simulate
-        energy loss.
-
-        Ater applying this algorithm, the current_state and previous_state
-        are swapped.
-        """
-        # Compute neighbor sum matrix
-        neighbor_sum = (
-            self.previous_state[:-2, 1:-1]
-            + self.previous_state[2:, 1:-1]
-            + self.previous_state[1:-1, :-2]
-            + self.previous_state[1:-1, 2:]
-        )
-
-        # Apply ripple formula
-        self.current_state[1:-1, 1:-1] = (
-            neighbor_sum / 2 - self.current_state[1:-1, 1:-1]
-        )
-
-        # Apply damping
-        self.current_state[1:-1, 1:-1] *= self.damping
-
-        # Python swapping
-        self.current_state, self.previous_state = (
-            self.previous_state,
-            self.current_state,
-        )
-
-    def _draw_current_state(self) -> None:
-        """
-        Render the current simulation state to the PyGame window.
-
-        The floating-point grid is clipped to [0, 255], converted to
-        an 8-bit grayscale image, stacked into an RGB surface, and
-        scaled to the window size.
-        """
-        # All values smaller than 0 become 0, and larger than 255 become 255.
-        current_state: np.ndarray = np.clip(self.current_state, 0, 255).astype(
-            np.float32
-        )
-
-        # Scale from 0–255 to 0.3–1.0 (raise the floor so the darkest is lighter)
-        normalized_state = current_state / self.maximum_brightness
-        scaled_state = 0.1 + 0.8 * normalized_state  # remap 0→0.3, 255→1.0
-
-        # Using `colormap` on scaled state converts each grid element (a value
-        # between 0 and 1, to an RGBA value, so a tuple consisting of 4 elements).
-        # The `[..., :3]` removes the alpha layer (transparency/opaqueness) and
-        # multiplying it with `self.maximum_brightness` de-normalizes it. Finally,
-        # each grid element is converted to an 8-bit unsigned integers, the standard
-        # format for image pixel data.
-        colormap = cm.get_cmap("hot")
-        rgb_array = (
-            colormap(scaled_state)[..., :3] * self.maximum_brightness
-        ).astype(np.uint8)
-
-        surface = pg.surfarray.make_surface(rgb_array.swapaxes(0, 1))
-        surface = pg.transform.scale(
-            surface, (self.window_width, self.window_height)
-        )
-
-        self.screen.blit(surface, (0, 0))
+        self.clock = pg.time.Clock()  # Used for setting the framerate
 
     def _handle_mouse(self, event: pg.event.Event) -> None:
         """
@@ -166,6 +187,178 @@ class WaterRipples:
                 ),
             ] = self.wave_brightness
 
+    def _propagate(self, mode: str) -> None:
+        """
+        Perform one simulation step of wave propagation.
+        """
+        if mode == "numba":
+            propagate_with_numba(
+                current_state=self.current_state,
+                previous_state=self.previous_state,
+                damping=self.damping,
+            )
+
+        elif mode == "numpy":
+            # Compute neighbor sum matrix
+            neighbor_sum = (
+                self.previous_state[:-2, 1:-1]
+                + self.previous_state[2:, 1:-1]
+                + self.previous_state[1:-1, :-2]
+                + self.previous_state[1:-1, 2:]
+            )
+
+            # Apply ripple formula
+            self.current_state[1:-1, 1:-1] = (
+                neighbor_sum / 2 - self.current_state[1:-1, 1:-1]
+            )
+
+            # Apply damping
+            self.current_state[1:-1, 1:-1] *= self.damping
+
+        elif mode == "iterative":
+            for y in range(1, len(self.previous_state) - 1):
+                for x in range(1, len(self.previous_state[y]) - 1):
+                    # Compute neighbor sum
+                    neighbor_sum = (
+                        self.previous_state[y - 1, x]
+                        + self.previous_state[y + 1, x]
+                        + self.previous_state[y, x - 1]
+                        + self.previous_state[y, x + 1]
+                    )
+
+                    # Apply ripple formula
+                    self.current_state[y, x] = (
+                        neighbor_sum / 2 - self.current_state[y, x]
+                    )
+
+                    # Apply damping
+                    self.current_state[y, x] *= self.damping
+
+        else:
+            raise ValueError(f"Unknown mode: {mode}")
+
+        # Python swapping
+        self.current_state, self.previous_state = (
+            self.previous_state,
+            self.current_state,
+        )
+
+    def _map_state_to_rgb(
+        self,
+        mode: str,
+    ) -> np.ndarray:
+        """
+        Maps the current state (a 2D-numpy array with integer values) to a
+        RGB-array (a 2D-numpy array with tuples consisting of three elements
+        representing the color value)
+
+        Args:
+            mode(str): The way the converstion from the current state to RGB
+                is performed. Options are
+                - "grayscale": Maps the values to just black and white.
+                - "colormap": Use a colormap to visualize your state.
+                - "scaled_colormap": Option to apply some scaling to your
+                    colormap if you dont like the outer edges of the colormap.
+        """
+
+        # All values smaller than 0 become 0, and larger than 255 become 255.
+        current_state_clipped: np.ndarray = np.clip(
+            self.current_state, 0, 255
+        ).astype(np.float32)
+
+        if mode == "grayscale":
+            # Take the current state value and stack it three times to get
+            # greyscale RGB value.
+            rgb_array = np.stack([current_state_clipped] * 3, axis=-1).astype(
+                np.uint8
+            )
+
+        elif mode == "colormap":
+            normalized_state = current_state_clipped / self.maximum_brightness
+            colormap = cm.get_cmap("bone")
+            rgb_array = (
+                colormap(normalized_state)[..., :3] * self.maximum_brightness
+            ).astype(np.uint8)
+
+        elif mode == "scaled_colormap":
+            # Scale from 0–255 to 0.3–1.0 (raise the floor so the darkest is lighter)
+            normalized_state = current_state_clipped / self.maximum_brightness
+            scaled_normalized_state = 0.1 + 0.8 * normalized_state
+
+            # Using `colormap` on scaled state converts each grid element (a value
+            # between 0 and 1, to an RGBA value, so a tuple consisting of 4 elements).
+            # The `[..., :3]` removes the alpha layer (transparency/opaqueness) and
+            # multiplying it with `self.maximum_brightness` de-normalizes it. Finally,
+            # each grid element is converted to an 8-bit unsigned integers, the standard
+            # format for image pixel data.
+            colormap = cm.get_cmap("hot")
+            rgb_array = (
+                colormap(scaled_normalized_state)[..., :3]
+                * self.maximum_brightness
+            ).astype(np.uint8)
+
+        else:
+            raise ValueError(f"Unknown mode: {mode}")
+
+        return rgb_array
+
+    def _render_state(
+        self, rgb_array: np.ndarray, mode: str = "surfarray"
+    ) -> None:
+        """
+        Render the current state onto the PyGame screen.
+
+        Args:
+            rgb_array (np.ndarray): A 3D NumPy array of shape (height, width, 3)
+                containing RGB values in range [0, 255]. Must have dtype uint8.
+            mode (str, optional): Rendering mode. Options:
+                - "surfarray": Fast rendering using pg.surfarray.make_surface().
+                - "rectangles": Draw each grid element as a PyGame rectangle.
+                    Slower, but useful for debugging and customization.
+                    Defaults to "surfarray".
+
+        Raises:
+            ValueError: If an unknown rendering mode is provided.
+
+        Returns:
+            None
+        """
+        if mode == "surfarray":
+            # Pygame surfarray expects arrays in the form (width, height, channels)
+            # Therefore we have to swap the width and the height first.
+            # The `surfarray` method converts RGB-numpy arrays into a PyGame surface
+            # object.
+            surface = pg.surfarray.make_surface(rgb_array.swapaxes(0, 1))
+
+            # Match the surface with the window size.
+            surface = pg.transform.scale(
+                surface, (self.window_width, self.window_height)
+            )
+
+            self.screen.blit(surface, (0, 0))
+
+        elif mode == "rectangles":
+            for y in range(len(rgb_array)):
+                for x in range(len(rgb_array[y])):
+                    color = tuple(rgb_array[y, x])
+                    rect = pg.Rect(
+                        x * self.grid_cell_width,
+                        y * self.grid_cell_height,
+                        self.grid_cell_width,
+                        self.grid_cell_height,
+                    )
+                    pg.draw.rect(self.screen, color, rect)
+
+        else:
+            raise ValueError(f"Unknown rendering mode: {mode}")
+
+    def _draw_current_state(self) -> None:
+        """
+        Render the current simulation state to the PyGame window.
+        """
+        rgb_array = self._map_state_to_rgb(mode=self.rgb_mode)
+        self._render_state(rgb_array=rgb_array, mode=self.render_mode)
+
     def execute(self) -> None:
         """
         Run the simulation loop until the user exits.
@@ -185,8 +378,8 @@ class WaterRipples:
                 elif event.type == pg.MOUSEBUTTONDOWN:
                     self._handle_mouse(event)
 
-            self.screen.fill((0, 0, 0))
-            self._propagate()
+            self.screen.fill(self.background_color)
+            self._propagate(mode=self.propagate_mode)
             self._draw_current_state()
 
             pg.display.flip()

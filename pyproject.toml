@@ -3,10 +3,11 @@ name = "algorithms-from-scratch"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = "==3.9.*"
 dependencies = [
-    "matplotlib>=3.10.5",
-    "numpy>=2.3.2",
+    "matplotlib>=3.9.4",
+    "numba>=0.60.0",
+    "numpy>=2.0.2",
     "pygame>=2.6.1",
 ]
 
