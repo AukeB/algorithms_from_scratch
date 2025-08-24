@@ -4,6 +4,7 @@ import pygame as pg
 import numpy as np
 import matplotlib.cm as cm
 
+
 class WaterRipples:
     """Simulation of 2D water ripples using a discrete wave equation."""
 
@@ -17,7 +18,7 @@ class WaterRipples:
         wave_brightness: int = 255,
         maximum_brightness: int = 255,
         cursor_splash_size: int = 2,
-        framerate: int = 1
+        framerate: int = 1,
     ) -> None:
         """
         Initialize the ripple simulation class.
@@ -32,7 +33,7 @@ class WaterRipples:
             number_of_columns: Number of columns in the simulation grid.
             number_of_rows: Number of rows in the simulation grid.
             damping: Factor between 0 and 1 that reduces wave amplitude each frame.
-            wave_brightness: Intensity value for the waves. Defaults to 255. While 
+            wave_brightness: Intensity value for the waves. Defaults to 255. While
                 the simulation itself allows values outside the range [0, 255], the
                 visualization clips to this range, so higher values effectively produce
                 higher visual contrast in the ripples.
@@ -59,7 +60,7 @@ class WaterRipples:
         pg.init()
         self.screen = pg.display.set_mode((self.window_width, self.window_height))
         self.clock = pg.time.Clock()
-    
+
     def _propagate(self) -> None:
         """
         Perform one simulation step of wave propagation.
@@ -74,16 +75,14 @@ class WaterRipples:
         """
         # Compute neighbor sum matrix
         neighbor_sum = (
-            self.previous_state[:-2, 1:-1] +
-            self.previous_state[2:, 1:-1] +
-            self.previous_state[1:-1, :-2] +
-            self.previous_state[1:-1, 2:]
+            self.previous_state[:-2, 1:-1]
+            + self.previous_state[2:, 1:-1]
+            + self.previous_state[1:-1, :-2]
+            + self.previous_state[1:-1, 2:]
         )
 
-         # Apply ripple formula
-        self.current_state[1:-1, 1:-1] = ( 
-            neighbor_sum / 2 - self.current_state[1:-1, 1:-1]
-        )
+        # Apply ripple formula
+        self.current_state[1:-1, 1:-1] = neighbor_sum / 2 - self.current_state[1:-1, 1:-1]
 
         # Apply damping
         self.current_state[1:-1, 1:-1] *= self.damping
@@ -100,8 +99,8 @@ class WaterRipples:
             "x_top_right": 0.7,
             "x_bottom_left": 0,
             "x_bottom_right": 1,
-        }
-        ) -> None:
+        },
+    ) -> None:
         """
         Render the current simulation state to the PyGame window.
 
@@ -117,20 +116,29 @@ class WaterRipples:
         scaled_state = 0.1 + 0.8 * normalized_state  # remap 0→0.3, 255→1.0
 
         colormap = cm.get_cmap("bone")
-        rgb_array = (colormap(scaled_state)[..., :3] * 255).astype(np.uint8)
+        rgb_array = (colormap(scaled_state)[..., :3] * self.maximum_brightness).astype(np.uint8)
 
-        trapezoid = {key: (value * self.window_height if key.startswith("y") else value*self.window_width) for key, value in normalized_trapezoid.items()}
+        trapezoid = {
+            key: (value * self.window_height if key.startswith("y") else value * self.window_width)
+            for key, value in normalized_trapezoid.items()
+        }
 
         for y in range(len(scaled_state)):
             for x in range(len(scaled_state[y])):
                 color = rgb_array[y][x]
 
-                x_left = trapezoid["x_top_left"] + (normalized_trapezoid["x_bottom_left"] - normalized_trapezoid["x_top_left"]) * y * (self.window_width / self.number_of_columns)
-                x_right = trapezoid["x_top_right"] + (normalized_trapezoid["x_bottom_right"] - normalized_trapezoid["x_top_right"]) * y * (self.window_height / self.number_of_rows)
+                x_left = trapezoid["x_top_left"] + (
+                    normalized_trapezoid["x_bottom_left"] - normalized_trapezoid["x_top_left"]
+                ) * y * (self.window_width / self.number_of_columns)
+                x_right = trapezoid["x_top_right"] + (
+                    normalized_trapezoid["x_bottom_right"] - normalized_trapezoid["x_top_right"]
+                ) * y * (self.window_height / self.number_of_rows)
                 scaled_grid_cell_width = (x_right - x_left) / self.number_of_columns
                 left = x_left + x * scaled_grid_cell_width
 
-                scaled_grid_cell_height = self.grid_cell_height * (normalized_trapezoid["y_bottom"] - normalized_trapezoid["y_top"])
+                scaled_grid_cell_height = self.grid_cell_height * (
+                    normalized_trapezoid["y_bottom"] - normalized_trapezoid["y_top"]
+                )
                 top = trapezoid["y_top"] + y * scaled_grid_cell_height
 
                 pg.draw.polygon(
@@ -140,10 +148,10 @@ class WaterRipples:
                         (left, top),
                         (left + scaled_grid_cell_width, top),
                         (left + scaled_grid_cell_width, top + scaled_grid_cell_height),
-                        (left, top + scaled_grid_cell_height)
-                    ]
+                        (left, top + scaled_grid_cell_height),
+                    ],
                 )
-    
+
     def _handle_mouse(self, event: pg.event.Event) -> None:
         """
         Handle mouse clicks by creating a disturbance in the ripple grid.
@@ -152,9 +160,9 @@ class WaterRipples:
             event (pg.event.Event): The PyGame mouse event.
 
         Notes:
-            The disturbance is added to the `previous_state` array at the 
-            grid cell corresponding to the mouse position. A small square 
-            region is disturbed instead of a single cell to make the 
+            The disturbance is added to the `previous_state` array at the
+            grid cell corresponding to the mouse position. A small square
+            region is disturbed instead of a single cell to make the
             ripple visible.
         """
         if event.type == pg.MOUSEBUTTONDOWN:
@@ -164,8 +172,12 @@ class WaterRipples:
             grid_y = my // self.grid_cell_height
 
             self.previous_state[
-                max(grid_y - self.cursor_splash_size, 1):min(grid_y + self.cursor_splash_size, self.number_of_rows-1),
-                max(grid_x - self.cursor_splash_size, 1):min(grid_x + self.cursor_splash_size, self.number_of_columns-1)
+                max(grid_y - self.cursor_splash_size, 1) : min(
+                    grid_y + self.cursor_splash_size, self.number_of_rows - 1
+                ),
+                max(grid_x - self.cursor_splash_size, 1) : min(
+                    grid_x + self.cursor_splash_size, self.number_of_columns - 1
+                ),
             ] = self.wave_brightness
 
     def execute(self) -> None:
@@ -190,7 +202,7 @@ class WaterRipples:
             self.screen.fill((0, 0, 0))
             self._propagate()
             self._draw_current_state()
-            
+
             pg.display.flip()
             self.clock.tick(self.framerate)
 

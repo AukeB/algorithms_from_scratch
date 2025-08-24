@@ -1,6 +1,6 @@
 make ruff:
-	ruff check miscellaneous --fix
-	ruff format miscellaneous
+	uv run ruff check miscellaneous --fix
+	uv run ruff format miscellaneous
 
 make git:
 	git add *
