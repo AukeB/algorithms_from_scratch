@@ -188,6 +188,60 @@ class WaterRipples:
                 ),
             ] = self.wave_brightness
 
+    def _propagate_with_numpy(self) -> None:
+        """
+        Perform one simulation step of wave propagation using NumPy.
+
+        The new value of each grid cell is computed as the average of its
+        four orthogonal neighbors from the previous state, minus the current
+        value. A damping factor is applied to simulate energy loss.
+
+        Updates are written in place to `self.current_state`.
+        """
+        # Compute neighbor sum matrix
+        neighbor_sum = (
+            self.previous_state[:-2, 1:-1]
+            + self.previous_state[2:, 1:-1]
+            + self.previous_state[1:-1, :-2]
+            + self.previous_state[1:-1, 2:]
+        )
+
+        # Apply ripple formula
+        self.current_state[1:-1, 1:-1] = (
+            neighbor_sum / 2 - self.current_state[1:-1, 1:-1]
+        )
+
+        # Apply damping
+        self.current_state[1:-1, 1:-1] *= self.damping
+
+    def _propagate_iterative(self) -> None:
+        """
+                Perform one simulation step of wave propagation using nested loops.
+
+                The new value of each grid cell is computed as the average of its
+                four orthogonal neighbors from the previous state, minus the current
+                value. A damping factor is applied to simulate energy loss.
+        f
+                Updates are written in place to `self.current_state`.
+        """
+        for y in range(1, len(self.previous_state) - 1):
+            for x in range(1, len(self.previous_state[y]) - 1):
+                # Compute neighbor sum
+                neighbor_sum = (
+                    self.previous_state[y - 1, x]
+                    + self.previous_state[y + 1, x]
+                    + self.previous_state[y, x - 1]
+                    + self.previous_state[y, x + 1]
+                )
+
+                # Apply ripple formula
+                self.current_state[y, x] = (
+                    neighbor_sum / 2 - self.current_state[y, x]
+                )
+
+                # Apply damping
+                self.current_state[y, x] *= self.damping
+
     def _propagate(self, mode: str) -> None:
         """
         Perform one simulation step of wave propagation.
@@ -198,43 +252,10 @@ class WaterRipples:
                 previous_state=self.previous_state,
                 damping=self.damping,
             )
-
         elif mode == "numpy":
-            # Compute neighbor sum matrix
-            neighbor_sum = (
-                self.previous_state[:-2, 1:-1]
-                + self.previous_state[2:, 1:-1]
-                + self.previous_state[1:-1, :-2]
-                + self.previous_state[1:-1, 2:]
-            )
-
-            # Apply ripple formula
-            self.current_state[1:-1, 1:-1] = (
-                neighbor_sum / 2 - self.current_state[1:-1, 1:-1]
-            )
-
-            # Apply damping
-            self.current_state[1:-1, 1:-1] *= self.damping
-
+            self._propagate_with_numpy()
         elif mode == "iterative":
-            for y in range(1, len(self.previous_state) - 1):
-                for x in range(1, len(self.previous_state[y]) - 1):
-                    # Compute neighbor sum
-                    neighbor_sum = (
-                        self.previous_state[y - 1, x]
-                        + self.previous_state[y + 1, x]
-                        + self.previous_state[y, x - 1]
-                        + self.previous_state[y, x + 1]
-                    )
-
-                    # Apply ripple formula
-                    self.current_state[y, x] = (
-                        neighbor_sum / 2 - self.current_state[y, x]
-                    )
-
-                    # Apply damping
-                    self.current_state[y, x] *= self.damping
-
+            self._propagate_iterative()
         else:
             raise ValueError(f"Unknown mode: {mode}")
 
