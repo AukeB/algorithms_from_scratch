@@ -11,8 +11,8 @@ import matplotlib.cm as cm
 # Size and dimension related parameters
 WINDOW_WIDTH = 4000
 WINDOW_HEIGHT = 2500
-NUMBER_OF_COLUMNS = 200
-NUMBER_OF_ROWS = 125
+NUMBER_OF_COLUMNS = 16
+NUMBER_OF_ROWS = 10
 
 # Algorithm related parameters
 DAMPING = 0.99
