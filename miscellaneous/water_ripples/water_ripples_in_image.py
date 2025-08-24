@@ -20,7 +20,9 @@ WAVE_BRIGHTNESS = 255
 MAXIMUM_BRIGHTNESS = 255
 
 # Modes
-RENDER_MODE = "trapezoid"  # Options are ["surfarray", "rectangles", "trapezoid"]
+RENDER_MODE = (
+    "trapezoid"  # Options are ["surfarray", "rectangles", "trapezoid"]
+)
 RGB_MODE = "scaled_colormap"  # Options are ["grayscale", "colormap", "scaled_colormap"]
 PROPAGATE_MODE = "numba"  # Options are ["numba", "numpy", "iterative"]
 
@@ -389,9 +391,43 @@ class WaterRipples:
                 )
                 for key, value in normalized_trapezoid.items()
             }
-                
 
+            for y in range(len(rgb_array)):
+                for x in range(len(rgb_array[y])):
+                    color = rgb_array[y][x]
 
+                    x_left = trapezoid["x_top_left"] + (
+                        normalized_trapezoid["x_bottom_left"]
+                        - normalized_trapezoid["x_top_left"]
+                    ) * y * (self.window_width / self.number_of_columns)
+                    x_right = trapezoid["x_top_right"] + (
+                        normalized_trapezoid["x_bottom_right"]
+                        - normalized_trapezoid["x_top_right"]
+                    ) * y * (self.window_height / self.number_of_rows)
+                    scaled_grid_cell_width = (
+                        x_right - x_left
+                    ) / self.number_of_columns
+                    left = x_left + x * scaled_grid_cell_width
+
+                    scaled_grid_cell_height = self.grid_cell_height * (
+                        normalized_trapezoid["y_bottom"]
+                        - normalized_trapezoid["y_top"]
+                    )
+                    top = trapezoid["y_top"] + y * scaled_grid_cell_height
+
+                    pg.draw.polygon(
+                        self.screen,
+                        color,
+                        [
+                            (left, top),
+                            (left + scaled_grid_cell_width, top),
+                            (
+                                left + scaled_grid_cell_width,
+                                top + scaled_grid_cell_height,
+                            ),
+                            (left, top + scaled_grid_cell_height),
+                        ],
+                    )
 
         else:
             raise ValueError(f"Unknown rendering mode: {mode}")
