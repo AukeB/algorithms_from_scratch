@@ -11,8 +11,8 @@ import matplotlib.cm as cm
 # Size and dimension related parameters
 WINDOW_WIDTH = 4000
 WINDOW_HEIGHT = 2500
-NUMBER_OF_COLUMNS = 16
-NUMBER_OF_ROWS = 10
+NUMBER_OF_COLUMNS = 200
+NUMBER_OF_ROWS = 125
 
 # Algorithm related parameters
 DAMPING = 0.99
@@ -20,16 +20,25 @@ WAVE_BRIGHTNESS = 255
 MAXIMUM_BRIGHTNESS = 255
 
 # Modes
-RENDER_MODE = (
-    "trapezoid"  # Options are ["surfarray", "rectangles", "trapezoid"]
-)
+RENDER_MODE = "trapezoid"  # Options are ["surfarray", "rectangle", "trapezoid"]
 RGB_MODE = "scaled_colormap"  # Options are ["grayscale", "colormap", "scaled_colormap"]
 PROPAGATE_MODE = "numba"  # Options are ["numba", "numpy", "iterative"]
 
 # Other parameter values
 CURSOR_SPLASH_SIZE = 2
-FRAMERATE = 120
+FRAMERATE = 60
 BACKGROUND_COLOR = (0, 0, 0)
+
+# Mode related
+# When RENDER_MODE is set 'trapezoid', these are the parameters w.r.t. the window
+NORMALIZED_TRAPEZOID: dict = {
+    "y_top": 0.1,
+    "y_bottom": 0.9,
+    "x_top_left": 0.3,
+    "x_top_right": 0.7,
+    "x_bottom_left": 0,
+    "x_bottom_right": 1,
+}
 
 # Functions
 
@@ -81,6 +90,7 @@ class WaterRipples:
         rgb_mode: str = RGB_MODE,
         propagate_mode: str = PROPAGATE_MODE,
         background_color: tuple[int, int, int] = BACKGROUND_COLOR,
+        normalized_trapezoid: dict = NORMALIZED_TRAPEZOID,
     ) -> None:
         """
         Initialize the ripple simulation class.
@@ -107,8 +117,10 @@ class WaterRipples:
             framerate: Target framerate for rendering. Units: frames / second.
             render_mode (str): The way you render the RGB data. Options are
                 "surfarray" (fast, blitting the entire rgb array on the surface
-                at once), and "rectangles" (iterating through the RGB array and
-                drawing each element as a rectangle on the surface).
+                at once), and "rectangle" (iterating through the RGB array and
+                drawing each element as a rectangle on the surface), or
+                "trapezoid" (visualizing the grid as a rectangle on the grid,
+                with the purpose of creating depth in the simulation).
             rgb_mode (str): The method for converting your current state to an
                 RGB array. Options are "grayscale", "colormap" (uses matplotlib
                 color maps to visualize the RGB data), or "scaled_colormap"
@@ -122,6 +134,9 @@ class WaterRipples:
                 individually, slow).
             background_color (tuple(int, int, int)): The background color of the
                 canvas.
+            normalized_trapezoid (dict[str, float]): If render_mode is set to
+                'trapezoid', these are the normalized coordinates of the
+                trapezoid w.r.t. the window size.
         """
         # User input variables
         self.window_width = window_width
@@ -137,6 +152,18 @@ class WaterRipples:
         self.rgb_mode = rgb_mode
         self.propagate_mode = propagate_mode
         self.background_color = background_color
+
+        # Optional input
+        if render_mode == "trapezoid":
+            self.normalized_trapezoid = normalized_trapezoid
+            self.trapezoid = {
+                key: (
+                    value * self.window_height
+                    if key.startswith("y")
+                    else value * self.window_width
+                )
+                for key, value in normalized_trapezoid.items()
+            }
 
         # Determine grid cell size
         self.grid_cell_width = int(self.window_width / number_of_columns)
@@ -163,32 +190,31 @@ class WaterRipples:
         self.clock = pg.time.Clock()  # Used for setting the framerate
 
     def _handle_mouse(self, event: pg.event.Event) -> None:
-        """
-        Handle mouse clicks by creating a disturbance in the ripple grid.
+        if event.type != pg.MOUSEBUTTONDOWN:
+            return
 
-        Args:
-            event (pg.event.Event): The PyGame mouse event.
+        mx, my = event.pos
 
-        Notes:
-            The disturbance is added to the `previous_state` array at the
-            grid cell corresponding to the mouse position. A small square
-            region is disturbed instead of a single cell to make the
-            ripple visible.
-        """
-        if event.type == pg.MOUSEBUTTONDOWN:
-            mx, my = event.pos
-
+        if self.render_mode == "trapezoid":
+            # To implement
+            # For now, just handle the same as for the other render modes
             grid_x = mx // self.grid_cell_width
             grid_y = my // self.grid_cell_height
 
-            self.previous_state[
-                max(grid_y - self.cursor_splash_size, 1) : min(
-                    grid_y + self.cursor_splash_size, self.number_of_rows - 1
-                ),
-                max(grid_x - self.cursor_splash_size, 1) : min(
-                    grid_x + self.cursor_splash_size, self.number_of_columns - 1
-                ),
-            ] = self.wave_brightness
+        else:
+            # Normal rectangular mode
+            grid_x = mx // self.grid_cell_width
+            grid_y = my // self.grid_cell_height
+
+        # Apply disturbance in ripple grid
+        self.previous_state[
+            max(grid_y - self.cursor_splash_size, 1) : min(
+                grid_y + self.cursor_splash_size, self.number_of_rows - 1
+            ),
+            max(grid_x - self.cursor_splash_size, 1) : min(
+                grid_x + self.cursor_splash_size, self.number_of_columns - 1
+            ),
+        ] = self.wave_brightness
 
     def _propagate_with_numpy(self) -> None:
         """
@@ -315,7 +341,7 @@ class WaterRipples:
             # multiplying it with `self.maximum_brightness` de-normalizes it. Finally,
             # each grid element is converted to an 8-bit unsigned integers, the standard
             # format for image pixel data.
-            colormap = cm.get_cmap("hot")
+            colormap = cm.get_cmap("GnBu")
             rgb_array = (
                 colormap(scaled_normalized_state)[..., :3]
                 * self.maximum_brightness
@@ -337,7 +363,7 @@ class WaterRipples:
                 containing RGB values in range [0, 255]. Must have dtype uint8.
             mode (str, optional): Rendering mode. Options:
                 - "surfarray": Fast rendering using pg.surfarray.make_surface().
-                - "rectangles": Draw each grid element as a PyGame rectangle.
+                - "rectangle": Draw each grid element as a PyGame rectangle.
                     Slower, but useful for debugging and customization.
                     Defaults to "surfarray".
                 - "trapezoid": Visualize the grid as a trapezoid
@@ -362,7 +388,7 @@ class WaterRipples:
 
             self.screen.blit(surface, (0, 0))
 
-        elif mode == "rectangles":
+        elif mode == "rectangle":
             for y in range(len(rgb_array)):
                 for x in range(len(rgb_array[y])):
                     color = tuple(rgb_array[y, x])
@@ -374,58 +400,74 @@ class WaterRipples:
                     )
                     pg.draw.rect(self.screen, color, rect)
         elif mode == "trapezoid":
-            normalized_trapezoid: dict = {
-                "y_top": 0.1,
-                "y_bottom": 0.9,
-                "x_top_left": 0.3,
-                "x_top_right": 0.7,
-                "x_bottom_left": 0,
-                "x_bottom_right": 1,
-            }
-
-            trapezoid = {
-                key: (
-                    value * self.window_height
-                    if key.startswith("y")
-                    else value * self.window_width
-                )
-                for key, value in normalized_trapezoid.items()
-            }
-
             for y in range(len(rgb_array)):
                 for x in range(len(rgb_array[y])):
                     color = rgb_array[y][x]
 
-                    x_left = trapezoid["x_top_left"] + (
-                        normalized_trapezoid["x_bottom_left"]
-                        - normalized_trapezoid["x_top_left"]
+                    # Scaled top width based on y coordinate
+                    x_left_top = self.trapezoid["x_top_left"] + (
+                        self.normalized_trapezoid["x_bottom_left"]
+                        - self.normalized_trapezoid["x_top_left"]
                     ) * y * (self.window_width / self.number_of_columns)
-                    x_right = trapezoid["x_top_right"] + (
-                        normalized_trapezoid["x_bottom_right"]
-                        - normalized_trapezoid["x_top_right"]
+                    x_right_top = self.trapezoid["x_top_right"] + (
+                        self.normalized_trapezoid["x_bottom_right"]
+                        - self.normalized_trapezoid["x_top_right"]
                     ) * y * (self.window_height / self.number_of_rows)
-                    scaled_grid_cell_width = (
-                        x_right - x_left
-                    ) / self.number_of_columns
-                    left = x_left + x * scaled_grid_cell_width
 
+                    # Scaled bottom width based on y coordinate
+                    x_left_bottom = self.trapezoid["x_top_left"] + (
+                        self.normalized_trapezoid["x_bottom_left"]
+                        - self.normalized_trapezoid["x_top_left"]
+                    ) * (y + 1) * (self.window_width / self.number_of_columns)
+                    x_right_bttom = self.trapezoid["x_top_right"] + (
+                        self.normalized_trapezoid["x_bottom_right"]
+                        - self.normalized_trapezoid["x_top_right"]
+                    ) * (y + 1) * (self.window_height / self.number_of_rows)
+
+                    # Scaled grid cell width top
+                    scaled_grid_cell_width_top = (
+                        x_right_top - x_left_top
+                    ) / self.number_of_columns
+
+                    # Scaled grid cell width bottom
+                    scaled_grid_cell_width_bottom = (
+                        x_right_bttom - x_left_bottom
+                    ) / self.number_of_columns
+
+                    # Scaled height
                     scaled_grid_cell_height = self.grid_cell_height * (
-                        normalized_trapezoid["y_bottom"]
-                        - normalized_trapezoid["y_top"]
+                        self.normalized_trapezoid["y_bottom"]
+                        - self.normalized_trapezoid["y_top"]
                     )
-                    top = trapezoid["y_top"] + y * scaled_grid_cell_height
+
+                    # Cell coordinates
+                    x_cell_top = x_left_top + x * scaled_grid_cell_width_top
+                    y_cell_top = (
+                        self.trapezoid["y_top"] + y * scaled_grid_cell_height
+                    )
+
+                    x_cell_bottom = (
+                        x_left_bottom + x * scaled_grid_cell_width_bottom
+                    )
+                    y_cell_bottom = (
+                        self.trapezoid["y_top"]
+                        + (y + 1) * scaled_grid_cell_height
+                    )
 
                     pg.draw.polygon(
                         self.screen,
                         color,
                         [
-                            (left, top),
-                            (left + scaled_grid_cell_width, top),
+                            (x_cell_top, y_cell_top),
                             (
-                                left + scaled_grid_cell_width,
-                                top + scaled_grid_cell_height,
+                                x_cell_top + scaled_grid_cell_width_top,
+                                y_cell_top,
                             ),
-                            (left, top + scaled_grid_cell_height),
+                            (
+                                x_cell_bottom + scaled_grid_cell_width_bottom,
+                                y_cell_bottom,
+                            ),
+                            (x_cell_bottom, y_cell_bottom),
                         ],
                     )
 
