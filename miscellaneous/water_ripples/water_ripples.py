@@ -109,14 +109,15 @@ class WaterRipples:
                 drawing each element as a rectangle on the surface).
             rgb_mode (str): The method for converting your current state to an
                 RGB array. Options are "grayscale", "colormap" (uses matplotlib
-                color maps to visualize the RGB data), or "scaled_colormap".
+                color maps to visualize the RGB data), or "scaled_colormap"
+                (gives you the option to apply scaling to a colormap).
             propagate_mode (str): The method you use for computing the next
                 state (propagating). Options are "numba" (uses numba to compute
                 next state, converts python loops into executable machine code
                 very fast), "numpy" (uses numpy slicing and matrix
                 multiplication to compute next state, fast) or "iterative"
                 (iterates through grid and computese each next grid element
-                individually).
+                individually, slow).
             background_color (tuple(int, int, int)): The background color of the
                 canvas.
         """
