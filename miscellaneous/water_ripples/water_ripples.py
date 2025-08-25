@@ -11,8 +11,8 @@ import matplotlib.cm as cm
 # Size and dimension related parameters
 WINDOW_WIDTH = 4000
 WINDOW_HEIGHT = 2500
-NUMBER_OF_COLUMNS = 200
-NUMBER_OF_ROWS = 125
+NUMBER_OF_COLUMNS = 80
+NUMBER_OF_ROWS = 50
 
 # Algorithm related parameters
 DAMPING = 0.99
@@ -20,13 +20,13 @@ WAVE_BRIGHTNESS = 255
 MAXIMUM_BRIGHTNESS = 255
 
 # Modes
-RENDER_MODE = "surfarray"  # Options are ["surfarray", "rectangles"]
+RENDER_MODE = "surfarray"  # Options are ["surfarray", "rectangle"]
 RGB_MODE = "scaled_colormap"  # Options are ["grayscale", "colormap", "scaled_colormap"]
 PROPAGATE_MODE = "numba"  # Options are ["numba", "numpy", "iterative"]
 
 # Other parameter values
-CURSOR_SPLASH_SIZE = 2
-FRAMERATE = 120
+CURSOR_SPLASH_SIZE = 1
+FRAMERATE = 60
 BACKGROUND_COLOR = (0, 0, 0)
 
 # Functions
@@ -297,7 +297,7 @@ class WaterRipples:
 
         elif mode == "colormap":
             normalized_state = current_state_clipped / self.maximum_brightness
-            colormap = cm.get_cmap("bone")
+            colormap = cm.get_cmap("Blues_r")
             rgb_array = (
                 colormap(normalized_state)[..., :3] * self.maximum_brightness
             ).astype(np.uint8)
@@ -313,7 +313,7 @@ class WaterRipples:
             # multiplying it with `self.maximum_brightness` de-normalizes it. Finally,
             # each grid element is converted to an 8-bit unsigned integers, the standard
             # format for image pixel data.
-            colormap = cm.get_cmap("hot")
+            colormap = cm.get_cmap("Blues_r")
             rgb_array = (
                 colormap(scaled_normalized_state)[..., :3]
                 * self.maximum_brightness

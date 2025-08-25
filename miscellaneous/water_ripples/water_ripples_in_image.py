@@ -11,8 +11,8 @@ import matplotlib.cm as cm
 # Size and dimension related parameters
 WINDOW_WIDTH = 4000
 WINDOW_HEIGHT = 2500
-NUMBER_OF_COLUMNS = 200
-NUMBER_OF_ROWS = 125
+NUMBER_OF_COLUMNS = 80
+NUMBER_OF_ROWS = 50
 
 # Algorithm related parameters
 DAMPING = 0.99
@@ -25,17 +25,26 @@ RGB_MODE = "scaled_colormap"  # Options are ["grayscale", "colormap", "scaled_co
 PROPAGATE_MODE = "numba"  # Options are ["numba", "numpy", "iterative"]
 
 # Other parameter values
-CURSOR_SPLASH_SIZE = 2
+CURSOR_SPLASH_SIZE = 1
 FRAMERATE = 60
 BACKGROUND_COLOR = (0, 0, 0)
 
 # Mode related
 # When RENDER_MODE is set 'trapezoid', these are the parameters w.r.t. the window
+# NORMALIZED_TRAPEZOID: dict = {
+#     "y_top": 0.3,
+#     "y_bottom": 0.7,
+#     "x_top_left": 0.5,
+#     "x_top_right": 0.8,
+#     "x_bottom_left": -0.1,
+#     "x_bottom_right": 1,
+# }
+
 NORMALIZED_TRAPEZOID: dict = {
-    "y_top": 0.1,
-    "y_bottom": 0.9,
-    "x_top_left": 0.3,
-    "x_top_right": 0.7,
+    "y_top": 0.2,
+    "y_bottom": 0.5,
+    "x_top_left": 0.6,
+    "x_top_right": 0.8,
     "x_bottom_left": 0,
     "x_bottom_right": 1,
 }
@@ -325,7 +334,7 @@ class WaterRipples:
 
         elif mode == "colormap":
             normalized_state = current_state_clipped / self.maximum_brightness
-            colormap = cm.get_cmap("bone")
+            colormap = cm.get_cmap("Blues_r")
             rgb_array = (
                 colormap(normalized_state)[..., :3] * self.maximum_brightness
             ).astype(np.uint8)
@@ -341,7 +350,7 @@ class WaterRipples:
             # multiplying it with `self.maximum_brightness` de-normalizes it. Finally,
             # each grid element is converted to an 8-bit unsigned integers, the standard
             # format for image pixel data.
-            colormap = cm.get_cmap("GnBu")
+            colormap = cm.get_cmap("Blues_r")
             rgb_array = (
                 colormap(scaled_normalized_state)[..., :3]
                 * self.maximum_brightness
@@ -351,6 +360,17 @@ class WaterRipples:
             raise ValueError(f"Unknown mode: {mode}")
 
         return rgb_array
+
+    def _compute_vertical_scaling(
+        self,
+        y,
+        y_start: float = 0.5,
+    ) -> float:
+        """ """
+        y_scaling_factor = y_start / self.number_of_rows * 2
+        y_adjusted = y * y_start + (y * (y + 1) / 2) * y_scaling_factor
+
+        return y_adjusted
 
     def _render_state(
         self, rgb_array: np.ndarray, mode: str = "surfarray"
@@ -401,6 +421,9 @@ class WaterRipples:
                     pg.draw.rect(self.screen, color, rect)
         elif mode == "trapezoid":
             for y in range(len(rgb_array)):
+                y_adj = self._compute_vertical_scaling(y=y)
+                y_adj_plus_one = self._compute_vertical_scaling(y=y + 1)
+
                 for x in range(len(rgb_array[y])):
                     color = rgb_array[y][x]
 
@@ -408,21 +431,25 @@ class WaterRipples:
                     x_left_top = self.trapezoid["x_top_left"] + (
                         self.normalized_trapezoid["x_bottom_left"]
                         - self.normalized_trapezoid["x_top_left"]
-                    ) * y * (self.window_width / self.number_of_columns)
+                    ) * y_adj * (self.window_height / self.number_of_rows)
                     x_right_top = self.trapezoid["x_top_right"] + (
                         self.normalized_trapezoid["x_bottom_right"]
                         - self.normalized_trapezoid["x_top_right"]
-                    ) * y * (self.window_height / self.number_of_rows)
+                    ) * y_adj * (self.window_height / self.number_of_rows)
 
-                    # Scaled bottom width based on y coordinate
+                    # Scaled bottom width based on y_adj coordinate
                     x_left_bottom = self.trapezoid["x_top_left"] + (
                         self.normalized_trapezoid["x_bottom_left"]
                         - self.normalized_trapezoid["x_top_left"]
-                    ) * (y + 1) * (self.window_width / self.number_of_columns)
-                    x_right_bttom = self.trapezoid["x_top_right"] + (
+                    ) * y_adj_plus_one * (
+                        self.window_height / self.number_of_rows
+                    )
+                    x_right_bottom = self.trapezoid["x_top_right"] + (
                         self.normalized_trapezoid["x_bottom_right"]
                         - self.normalized_trapezoid["x_top_right"]
-                    ) * (y + 1) * (self.window_height / self.number_of_rows)
+                    ) * y_adj_plus_one * (
+                        self.window_height / self.number_of_rows
+                    )
 
                     # Scaled grid cell width top
                     scaled_grid_cell_width_top = (
@@ -431,7 +458,7 @@ class WaterRipples:
 
                     # Scaled grid cell width bottom
                     scaled_grid_cell_width_bottom = (
-                        x_right_bttom - x_left_bottom
+                        x_right_bottom - x_left_bottom
                     ) / self.number_of_columns
 
                     # Scaled height
@@ -443,7 +470,8 @@ class WaterRipples:
                     # Cell coordinates
                     x_cell_top = x_left_top + x * scaled_grid_cell_width_top
                     y_cell_top = (
-                        self.trapezoid["y_top"] + y * scaled_grid_cell_height
+                        self.trapezoid["y_top"]
+                        + y_adj * scaled_grid_cell_height
                     )
 
                     x_cell_bottom = (
@@ -451,7 +479,7 @@ class WaterRipples:
                     )
                     y_cell_bottom = (
                         self.trapezoid["y_top"]
-                        + (y + 1) * scaled_grid_cell_height
+                        + y_adj_plus_one * scaled_grid_cell_height
                     )
 
                     pg.draw.polygon(
