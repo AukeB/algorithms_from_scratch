@@ -41,11 +41,11 @@ BACKGROUND_COLOR = (0, 0, 0)
 # }
 
 NORMALIZED_TRAPEZOID: dict = {
-    "y_top": 0.2,
-    "y_bottom": 0.5,
-    "x_top_left": 0.6,
-    "x_top_right": 0.8,
-    "x_bottom_left": 0,
+    "y_top": 0.55,
+    "y_bottom": 1.0,
+    "x_top_left": 0,
+    "x_top_right": 1,
+    "x_bottom_left": 0.9,
     "x_bottom_right": 1,
 }
 
@@ -487,14 +487,17 @@ class WaterRipples:
                         + y_adj_plus_one * scaled_grid_cell_height
                     )
 
-                    color_rgba = (*color, 200)
+                    color_rgba = (*color, 100)
 
                     pg.draw.polygon(
                         overlay,
                         color_rgba,
                         [
                             (x_cell_top, y_cell_top),
-                            (x_cell_top + scaled_grid_cell_width_top, y_cell_top),
+                            (
+                                x_cell_top + scaled_grid_cell_width_top,
+                                y_cell_top,
+                            ),
                             (
                                 x_cell_bottom + scaled_grid_cell_width_bottom,
                                 y_cell_bottom,
@@ -525,7 +528,9 @@ class WaterRipples:
         # Main loop
         running = True
 
-        background = pg.image.load("miscellaneous/water_ripples/images/patagonia_lake.jpg").convert()
+        background = pg.image.load(
+            "miscellaneous/water_ripples/images/patagonia_lake.jpg"
+        ).convert()
         background = pg.transform.scale(
             background, (self.window_width, self.window_height)
         )
